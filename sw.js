@@ -1,10 +1,10 @@
-const CACHE = 'math-scorpion-v1';
-const CORE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE = 'math-scorpion-v2';
+const CORE_PATHS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(CORE_ASSETS).catch(() => {}))
+    caches.open(CACHE).then((c) => c.addAll(CORE_PATHS).catch(() => {}))
   );
 });
 
@@ -17,10 +17,18 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Network-first: always try to get the latest version when online.
-// Falls back to the last cached copy only when offline.
+// IMPORTANT: only ever intercept the app's own shell files (same origin, core paths).
+// Everything else — Firestore/Firebase calls, CDN scripts, fonts, any API request —
+// is left completely untouched so the database always gets fresh, live data.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isCorePath = CORE_PATHS.includes(url.pathname);
+
+  if (!isSameOrigin || !isCorePath) return; // let the browser handle it normally
+
   e.respondWith(
     fetch(e.request)
       .then((res) => {
