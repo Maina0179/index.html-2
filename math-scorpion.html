@@ -1,0 +1,2923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Scorpion</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F7EFDD">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Math Scorpion">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.0/firebase-firestore-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --surface:#FFFFFF;
+    --surface2:#F2F4F7;
+    --grid: rgba(37,99,235,0.035);
+    --sand:#1A1D23;
+    --sand-dim:#6B7280;
+    --gold:#2563EB;
+    --gold-dim:#DBEAFE;
+    --sting:#DC2626;
+    --sting-dim:#FBDCDA;
+    --sage:#16A34A;
+    --sage-dim:#DCF3E3;
+    --on-accent:#FFFFFF;
+    --shadow-color: rgba(20,30,60,0.08);
+    --sidebar-bg:#2563EB;
+    --sidebar-text:#FFFFFF;
+    --radius: 14px;
+  }
+  body.theme-dark{
+    --bg:#1B1712;
+    --surface:#241F18;
+    --surface2:#2E2718;
+    --grid: rgba(232,217,181,0.055);
+    --sand:#EDE1C4;
+    --sand-dim:#AFA07C;
+    --gold:#D4A24C;
+    --gold-dim:#8C6E36;
+    --sting:#C1432B;
+    --sting-dim:#5A2419;
+    --sage:#7A9B5B;
+    --sage-dim:#33421F;
+    --on-accent:#1B1712;
+    --shadow-color: rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color:var(--bg);
+    color:var(--sand);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:600; letter-spacing:-0.01em; margin:0; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  #app{ max-width:680px; margin:0 auto; padding:24px 18px 60px; }
+  body.has-sidebar #app{ margin:0; margin-left:56px; }
+  .katex{ font-size:1.05em; }
+
+  .brand{ display:flex; align-items:center; gap:14px; margin-bottom:6px; cursor:pointer; }
+  .brand svg{ width:46px; height:30px; flex-shrink:0; }
+  .brand-name{ font-size:1.5rem; }
+  .brand-tail{ height:3px; width:120px; margin:6px 0 30px 60px; background:linear-gradient(90deg, var(--gold), transparent); border-radius:2px; }
+  .tagline{ font-family:'Fraunces', serif; font-weight:700; font-style:italic; color:var(--gold); font-size:1.05rem; margin:-18px 0 22px; letter-spacing:0.01em; }
+  .eyebrow{ font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:6px; display:block; }
+
+  .card{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid #ECEEF1;
+    border-radius:0;
+    padding:0 0 22px;
+    margin-bottom:22px;
+    box-shadow:none;
+  }
+  .card h2{ font-size:1.3rem; margin-bottom:4px; }
+  .subtext{ color:var(--sand-dim); font-size:0.9rem; margin-bottom:18px; line-height:1.5; }
+  .hint{ color:var(--sand-dim); font-size:0.76rem; margin-top:4px; line-height:1.4; }
+
+  label{ display:block; font-size:0.82rem; color:var(--sand-dim); margin:14px 0 6px; }
+  input, select, textarea{
+    width:100%; padding:11px 12px; border-radius:9px;
+    border:1px solid rgba(237,225,196,0.18);
+    background:var(--surface2); color:var(--sand);
+    font-family:'Space Grotesk', sans-serif; font-size:0.96rem;
+    outline:none; transition:border-color .15s;
+  }
+  textarea{ resize:vertical; min-height:80px; font-family:'Space Grotesk'; }
+  input:focus, select:focus, textarea:focus{ border-color:var(--gold); }
+  input[type=file]{ padding:8px; font-size:0.85rem; }
+  input[type=checkbox]{ width:auto; margin-right:8px; }
+  .pw-wrap{ position:relative; }
+  .pw-wrap input{ padding-right:58px; }
+  .pw-toggle{ position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gold); font-size:0.72rem; font-weight:700; padding:6px 8px; margin:0; cursor:pointer; }
+  .checkline{ display:flex; align-items:center; margin-top:14px; font-size:0.88rem; color:var(--sand); }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  @media (max-width:520px){ .row3{ grid-template-columns:1fr; } .row2{grid-template-columns:1fr;} }
+
+  button{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:0.94rem;
+    border:none; border-radius:9px; padding:12px 18px; cursor:pointer;
+    transition:transform .1s ease, filter .15s ease;
+  }
+  button:active{ transform:scale(0.98); }
+  .btn-primary{ background:var(--gold); color:var(--on-accent); width:100%; margin-top:20px; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{ background:transparent; color:var(--sand-dim); border:1px solid rgba(237,225,196,0.18); width:100%; margin-top:10px; }
+  .btn-ghost:hover{ color:var(--sand); border-color:var(--gold-dim); }
+  .btn-sm{ padding:8px 14px; font-size:0.85rem; width:auto; margin-top:10px; }
+  .link-btn{ background:none; border:none; color:var(--gold); text-decoration:underline; cursor:pointer; font-size:0.85rem; padding:0; }
+  a.dl, button.dl{ color:var(--gold); text-decoration:underline; font-size:0.85rem; background:none; border:none; padding:0; margin:0; cursor:pointer; font-family:'Space Grotesk',sans-serif; }
+
+  .file-preview-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:10000;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .file-preview-modal{
+    background:var(--surface); width:100%; max-width:760px; max-height:88vh;
+    border-radius:16px 16px 0 0; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .file-preview-header{
+    display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
+    border-bottom:1px solid rgba(212,162,76,0.16); font-weight:600; color:var(--sand);
+  }
+  .file-preview-header button{ background:none; border:none; color:var(--sand-dim); font-size:1.1rem; padding:4px 8px; margin:0; cursor:pointer; }
+  .file-preview-body{ overflow:auto; padding:14px; flex:1; text-align:center; }
+  .file-preview-body img{ max-width:100%; border-radius:8px; }
+  .file-preview-body iframe{ width:100%; height:65vh; border:none; border-radius:8px; background:#fff; }
+  .file-preview-footer{ padding:12px 16px; border-top:1px solid rgba(212,162,76,0.16); }
+
+  .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px;}
+  .role-card{ background:var(--surface); border:1px solid rgba(212,162,76,0.16); border-radius:var(--radius); padding:22px 16px; text-align:center; cursor:pointer; transition:.15s; }
+  .role-card:hover{ border-color:var(--gold); transform:translateY(-2px); }
+  .role-card .ic{ font-size:1.8rem; margin-bottom:8px; }
+  .role-card h3{ font-size:1.05rem; }
+  .role-card p{ color:var(--sand-dim); font-size:0.8rem; margin-top:4px; }
+
+  .toggle-row{ display:flex; gap:8px; margin-bottom:6px; }
+  .toggle-row button{ flex:1; background:var(--surface2); color:var(--sand-dim); }
+  .toggle-row button.active{ background:var(--gold); color:var(--on-accent); }
+
+  .err{ color:var(--sting); font-size:0.82rem; margin-top:10px; min-height:1em; }
+  .ok{ color:var(--sage); font-size:0.82rem; margin-top:10px; }
+
+  .exam-item{ padding:14px 0; border-bottom:1px solid rgba(237,225,196,0.08); }
+  .exam-item:last-child{ border-bottom:none; }
+  .exam-item .row{ display:flex; justify-content:space-between; align-items:center; }
+  .exam-item .code{ background:var(--surface2); color:var(--gold); padding:3px 8px; border-radius:6px; font-size:0.8rem; }
+  .exam-actions{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .exam-actions button{ padding:7px 12px; font-size:0.78rem; margin-top:0; }
+  .badge{ display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.72rem; font-weight:600; }
+  .badge-live{ background:var(--sage-dim); color:var(--sage); }
+  .badge-upcoming{ background:var(--gold-dim); color:var(--gold); }
+  .badge-closed{ background:var(--sting-dim); color:#D98873; }
+  .type-tag{ display:inline-block; font-size:0.68rem; padding:2px 7px; border-radius:5px; margin-left:6px; text-transform:uppercase; letter-spacing:.04em; }
+  .type-mcq{ background:var(--sage-dim); color:var(--sage); }
+  .type-upload{ background:var(--gold-dim); color:var(--gold); }
+  .type-text{ background:rgba(193,67,43,0.18); color:#E38C79; }
+
+  .qcount{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .progress{ height:6px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-bottom:22px; }
+  .progress-fill{ height:100%; background:var(--gold); transition:width .3s ease; }
+
+  .option{ display:block; width:100%; text-align:left; padding:13px 14px; margin-bottom:10px; border-radius:9px;
+    background:var(--surface2); border:1px solid rgba(237,225,196,0.14); color:var(--sand); font-family:'Space Grotesk'; font-size:0.95rem; cursor:pointer; }
+  .option:hover{ border-color:var(--gold); }
+  .option.correct{ background:var(--sage-dim); border-color:var(--sage); color:var(--sage); }
+  .option.wrong{ background:var(--sting-dim); border-color:var(--sting); color:#E38C79; }
+  .option[disabled]{ cursor:default; }
+
+  .toast{
+    position:fixed; top:22px; left:50%; transform:translateX(-50%) translateY(-20px);
+    padding:12px 22px; border-radius:10px; font-weight:600; font-size:0.9rem;
+    opacity:0; transition:all .25s ease; z-index:50; box-shadow:0 6px 20px var(--shadow-color);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.good{ background:var(--sage); color:#12210b; }
+  .toast.bad{ background:var(--sting); color:#2a0d08; }
+  .toast.info{ background:var(--gold); color:var(--on-accent); }
+
+  .qbuilder-item{ background:var(--surface2); border-radius:10px; padding:14px; margin-bottom:10px; font-size:0.88rem; }
+  .qbuilder-item .qtop{ display:flex; justify-content:space-between; align-items:center; color:var(--sand-dim); font-size:0.75rem; margin-bottom:6px;}
+  .remove-x{ background:none; border:none; color:var(--sting); cursor:pointer; font-size:0.8rem; padding:0; }
+
+  .who{ font-size:0.85rem; color:var(--sand-dim); }
+  .who b{ color:var(--sand); }
+  .logout{ background:none; border:none; color:var(--sand-dim); text-decoration:underline; cursor:pointer; font-size:0.8rem; }
+
+  .score-hero{ text-align:center; padding:30px 20px; }
+  .score-hero .big{ font-family:'Fraunces', serif; font-size:3.4rem; color:var(--gold); }
+  .score-hero .msg{ color:var(--sand-dim); margin-top:8px; }
+
+  .spinner{ width:18px; height:18px; border:2px solid rgba(237,225,196,0.2); border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .center{ text-align:center; padding:40px 0; color:var(--sand-dim); }
+
+  .learner-row{ border-bottom:1px solid rgba(237,225,196,0.08); padding:16px 0; }
+  .learner-row:last-child{ border-bottom:none; }
+  .qmark{ background:var(--surface2); border-radius:9px; padding:12px; margin:8px 0; }
+  .qmark .prompt{ margin-bottom:8px; }
+  .marks-input{ width:80px; display:inline-block; margin:0 0 0 8px; }
+
+  .sidebar{
+    position:fixed; left:0; top:0; bottom:0; width:56px; z-index:500;
+    background:var(--sidebar-bg); display:flex; flex-direction:column; align-items:center;
+    padding:14px 0; gap:8px;
+  }
+  .sidebar button{
+    background:transparent; border:none; color:var(--sidebar-text); font-size:1.25rem;
+    width:40px; height:40px; border-radius:10px; cursor:pointer; margin:0; padding:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .sidebar button:active{ background:rgba(255,255,255,0.18); }
+  .sidebar button.active{ background:rgba(255,255,255,0.22); }
+  .sidebar .sidebar-spacer{ flex:1; }
+  .sidebar button{ position:relative; }
+  .badge-dot{
+    background:var(--sting); color:#fff; font-size:0.62rem; font-weight:700;
+    border-radius:10px; padding:1px 5px; min-width:15px; text-align:center; line-height:1.3;
+    display:inline-block;
+  }
+  .sidebar button .badge-dot{ position:absolute; top:-2px; right:-2px; }
+  .sidebar-drawer button .badge-dot{ margin-left:8px; }
+
+  .sidebar-scrim{
+    display:none; position:fixed; inset:0; background:rgba(20,30,60,0.35); z-index:498;
+  }
+  .sidebar-scrim.open{ display:block; }
+  .sidebar-drawer{
+    position:fixed; left:56px; top:0; bottom:0; width:220px; z-index:499;
+    background:var(--sidebar-bg); padding:70px 12px 20px; overflow-y:auto;
+    transform:translateX(-110%); transition:transform .25s ease;
+  }
+  .sidebar-drawer.open{ transform:translateX(0); }
+  .sidebar-drawer button, .sidebar-drawer a{
+    display:block; width:100%; text-align:left; background:rgba(255,255,255,0.1);
+    color:var(--sidebar-text); border:none; padding:12px 14px; margin:0 0 8px; border-radius:9px;
+    font-size:0.88rem; text-decoration:none; box-sizing:border-box;
+  }
+  .settings-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 4px; cursor:pointer; border-bottom:1px solid rgba(237,225,196,0.1); font-weight:600; }
+  .settings-row:last-of-type{ border-bottom:none; }
+
+  table.resulttable{ width:100%; border-collapse:collapse; font-size:0.88rem; }
+  table.resulttable th{ text-align:left; color:var(--sand-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:.04em; padding:8px 6px; border-bottom:1px solid rgba(237,225,196,0.14); }
+  table.resulttable td{ padding:10px 6px; border-bottom:1px solid rgba(237,225,196,0.08); }
+  .rating{ display:inline-block; padding:3px 9px; border-radius:6px; font-size:0.72rem; font-weight:700; }
+  .rating-BE{ background:var(--sting-dim); color:#E38C79; }
+  .rating-AE{ background:var(--gold-dim); color:var(--gold); }
+  .rating-ME{ background:var(--sage-dim); color:var(--sage); }
+  .rating-EE{ background:#2C4F6B; color:#8FC3E8; }
+  .rank-1{ color:var(--gold); font-weight:700; }
+  .timer-badge{ text-align:center; font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--gold); background:var(--surface2); border-radius:8px; padding:8px; margin-bottom:16px; }
+
+  #splash-screen{
+    position:fixed; inset:0; z-index:20000; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transition: opacity .4s ease;
+  }
+  #splash-screen.fade{ opacity:0; pointer-events:none; }
+
+  #top-loader{
+    position:fixed; top:0; left:0; height:3px; width:0%;
+    background:var(--gold); z-index:9999; opacity:0;
+    transition: width .3s ease, opacity .25s ease;
+  }
+  #top-loader.active{ opacity:1; width:80%; }
+
+  .install-banner{
+    position:fixed; left:12px; right:12px; bottom:12px; z-index:9998;
+    background:var(--surface); border:1px solid rgba(212,162,76,0.3);
+    border-radius:14px; box-shadow:0 10px 30px var(--shadow-color);
+    padding:12px 12px 12px 14px; display:flex; align-items:center; gap:12px;
+    transition: transform .3s ease, opacity .3s ease;
+  }
+  .install-banner.hidden{ transform:translateY(140%); opacity:0; pointer-events:none; }
+  .install-banner img{ width:40px; height:40px; border-radius:10px; flex-shrink:0; }
+  .install-banner-text{ flex:1; display:flex; flex-direction:column; font-size:0.8rem; color:var(--sand-dim); min-width:0; }
+  .install-banner-text b{ color:var(--sand); font-size:0.9rem; }
+  .install-banner-close{ background:none; border:none; color:var(--sand-dim); font-size:0.95rem; padding:4px 6px; margin:0; cursor:pointer; align-self:flex-start; }
+</style>
+</head>
+<body>
+<div id="splash-screen" onclick="dismissSplash()">
+  <svg viewBox="0 0 120 70" fill="none" style="width:90px;height:56px;">
+    <path d="M18,46 Q4,40 8,26 Q10,18 20,20" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M102,46 Q116,40 112,26 Q110,18 100,20" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="60" cy="42" rx="22" ry="14" fill="var(--gold)"/>
+    <circle cx="60" cy="42" r="6" fill="var(--on-accent)"/>
+    <path d="M78,36 Q96,30 100,16 Q102,8 92,4" stroke="var(--gold)" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <circle cx="86" cy="26" r="3" fill="var(--gold)"/>
+    <circle cx="94" cy="15" r="3" fill="var(--gold)"/>
+    <path d="M92,4 L98,-2 L96,8 Z" fill="var(--sting)" transform="translate(0,4)"/>
+  </svg>
+  <h1 style="font-family:'Fraunces',serif;color:var(--sand);font-size:1.7rem;margin:14px 0 6px;">Math Scorpion</h1>
+  <p id="splash-quote" style="color:var(--gold);font-style:italic;font-size:0.95rem;max-width:280px;text-align:center;padding:0 20px;"></p>
+</div>
+<div id="top-loader"></div>
+<div id="install-banner" class="install-banner hidden">
+  <img src="icon-192.png" alt="">
+  <div class="install-banner-text">
+    <b>Install Math Scorpion</b>
+    <span id="install-banner-msg">Add it to your home screen for quick, full-screen access.</span>
+  </div>
+  <button id="install-banner-btn" class="btn-primary" style="width:auto;margin:0;padding:9px 16px;">Install</button>
+  <button class="install-banner-close" onclick="dismissInstallBanner()">✕</button>
+</div>
+<div id="app"></div>
+
+<script>
+/* =========================================================================
+   FIREBASE SETUP — paste your config from the Firebase console here.
+   1. https://console.firebase.google.com → Add project (free).
+   2. Build → Firestore Database → Create database → Start in TEST MODE.
+   3. Gear icon → Project settings → scroll to "Your apps" → click </> (web) → register an app.
+   4. Copy the firebaseConfig object shown there and paste the values below.
+   5. Save, re-upload to GitHub as index.html — Vercel redeploys automatically.
+   Test-mode rules are open to anyone and expire after 30 days — fine for now,
+   tighten them under Firestore → Rules before real classroom use.
+   ========================================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDkqcZQ72WW_G5Vke0i9xqVixnHXpbsmnU",
+  authDomain: "scorpion-john.firebaseapp.com",
+  projectId: "scorpion-john",
+  storageBucket: "scorpion-john.firebasestorage.app",
+  messagingSenderId: "672422036135",
+  appId: "1:672422036135:web:3a3aa374adcea5ee409182"
+};
+
+/* CHANGE THIS to your own secret before deploying — this is the password for the
+   hidden superadmin view (platform-wide stats). Only you should know it. */
+const ADMIN_PASSWORD = "scorpion-admin-2026";
+
+let db = null, firebaseReady = false;
+try{
+  if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseReady = true;
+  }
+}catch(e){ console.error('Firebase init failed', e); }
+
+/* ---------- thin top loading bar ---------- */
+let loaderPending = 0, loaderHideTimeout = null;
+function loaderShow(){
+  loaderPending++;
+  if(loaderHideTimeout){ clearTimeout(loaderHideTimeout); loaderHideTimeout=null; }
+  const el = document.getElementById('top-loader');
+  if(el){ el.style.width = '0%'; requestAnimationFrame(()=> el.classList.add('active')); }
+}
+function loaderHide(){
+  loaderPending = Math.max(0, loaderPending-1);
+  if(loaderPending>0) return;
+  const el = document.getElementById('top-loader');
+  if(!el) return;
+  el.style.width = '100%';
+  loaderHideTimeout = setTimeout(()=>{ el.classList.remove('active'); el.style.width='0%'; }, 250);
+}
+
+/* ---------- storage helpers, backed by Firestore (shared across every device) ---------- */
+async function sGet(key){
+  if(!db) return null;
+  loaderShow();
+  try{
+    const snap = await db.collection('appdata').doc(key).get();
+    return snap.exists ? snap.data().value : null;
+  }catch(e){ console.error('storage get failed', e); return null; }
+  finally{ loaderHide(); }
+}
+async function sSet(key, val){
+  if(!db) return null;
+  loaderShow();
+  try{
+    await db.collection('appdata').doc(key).set({ value: val, updatedAt: Date.now() });
+    return true;
+  }catch(e){ console.error('storage set failed', e); return null; }
+  finally{ loaderHide(); }
+}
+async function sList(prefix){
+  if(!db) return [];
+  loaderShow();
+  try{
+    const snaps = await db.collection('appdata')
+      .orderBy(firebase.firestore.FieldPath.documentId())
+      .startAt(prefix).endAt(prefix + '\uf8ff')
+      .get();
+    return snaps.docs.map(d=>d.id);
+  }catch(e){ console.error('storage list failed', e); return []; }
+  finally{ loaderHide(); }
+}
+
+function keyify(s){ return s.trim().toLowerCase().replace(/\s+/g,''); }
+function fullName(l){ return l.fullName || [l.firstName,l.secondName,l.surname].filter(Boolean).join(' '); }
+const USERNAME_RE = /^[A-Za-z]{3,}[0-9]+$/;
+function validPassword(p){ return p.length>=4 && /[A-Za-z]/.test(p) && /[0-9]/.test(p); }
+
+const TOPICS = ["Whole Numbers","Fractions","Decimals","Algebra","Calculus","Measurement","Geometry","Data Handling","Money","Time","Ratio & Proportion"];
+const MAX_FILE_BYTES = 350 * 1024;
+const GRADES = Array.from({length:12},(_,i)=>String(i+1));
+let selectedGrade = null;
+
+function gradeOptions(selected){
+  return GRADES.map(g=>`<option value="${g}" ${String(selected)===g?'selected':''}>Grade ${g}</option>`).join('');
+}
+function ratingFor(pct){
+  if(pct<30) return 'B.E';
+  if(pct<50) return 'A.E';
+  if(pct<75) return 'M.E';
+  return 'E.E';
+}
+function ratingClass(rating){ return 'rating-'+rating.replace(/\./g,''); }
+
+function genCode(existing){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code;
+  do{
+    let tail = "";
+    for(let i=0;i<3;i++) tail += chars[Math.floor(Math.random()*chars.length)];
+    code = "MS" + tail;
+  } while(existing.has(code));
+  return code;
+}
+
+function readFileAsDataURL(file){
+  return new Promise((resolve,reject)=>{
+    if(file.size > MAX_FILE_BYTES){ reject(new Error('File is too large — please keep it under 350KB (the shared database has a size limit).')); return; }
+    const r = new FileReader();
+    r.onload = ()=> resolve({ name:file.name, type:file.type, dataUrl:r.result });
+    r.onerror = ()=> reject(new Error('Could not read that file.'));
+    r.readAsDataURL(file);
+  });
+}
+
+/* ---------- app state ---------- */
+let state = { view:'home', learner:null, teacher:null, err:'', examDraft:null, activeExam:null, qIndex:0, answers:[], marks:{}, feedback:null, paperAnswerFiles:[] };
+let viewHistory = [];
+
+function go(view, extra={}){
+  hamburgerOpen = false;
+  if(view!=='chat'){
+    stopChatListener();
+    if(state.view==='chat' && state.activeConvoKey){ markChatRead(state.activeConvoKey).then(refreshUnreadCounts); }
+  }
+  if(view==='home'){ viewHistory = []; }
+  else if(state.view && state.view!==view){ viewHistory.push(state.view); }
+  state = {...state, view, err:'', ...extra}; render();
+}
+function goBack(){
+  const prev = viewHistory.pop();
+  state = {...state, view: prev || 'learnerDashboard', err:''};
+  render();
+}
+
+/* ---------- toast ---------- */
+/* ---------- live math preview: type plain syntax like 1/2 or 2^2, see it rendered as real math below ---------- */
+function autoMathify(raw){
+  if(!raw) return raw;
+  let s = raw;
+  s = s.replace(/sqrt\(([^)]+)\)/gi, (m, inner) => '$\\sqrt{'+inner+'}$');
+  s = s.replace(/(\d+)\/(\d+)/g, (m, a, b) => '$\\frac{'+a+'}{'+b+'}$');
+  s = s.replace(/(\w+)\^\(([^)]+)\)/g, (m, base, exp) => '$'+base+'^{'+exp+'}$');
+  s = s.replace(/(\w+)\^(-?\w+)/g, (m, base, exp) => '$'+base+'^{'+exp+'}$');
+  s = s.replace(/(\w+)_\(([^)]+)\)/g, (m, base, sub) => '$'+base+'_{'+sub+'}$');
+  s = s.replace(/(\w+)_(-?\w+)/g, (m, base, sub) => '$'+base+'_{'+sub+'}$');
+  return s;
+}
+function updateLivePreview(rawValue, previewElId){
+  const el = document.getElementById(previewElId);
+  if(!el) return;
+  if(!rawValue || !rawValue.trim()){ el.innerHTML = ''; return; }
+  el.innerHTML = autoMathify(rawValue);
+  if(window.renderMathInElement){
+    try{ renderMathInElement(el, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); }catch(e){}
+  }
+}
+
+function toast(msg, kind){
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=> t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, 1800);
+}
+
+/* ---------- in-app file preview (opens on top of the app instead of navigating away) ---------- */
+window._previewFiles = window._previewFiles || {};
+/* ---------- multi-file helpers (also read old single-file data safely) ---------- */
+function asFileArray(x){
+  if(!x) return [];
+  return Array.isArray(x) ? x : [x];
+}
+async function pickFiles(inputEl){
+  const files = Array.from(inputEl.files||[]);
+  const out = [];
+  for(const file of files){
+    try{ out.push(await readFileAsDataURL(file)); }
+    catch(e){ toast(e.message, 'bad'); }
+  }
+  return out;
+}
+function filesListHTML(filesOrFile, prefix){
+  const arr = asFileArray(filesOrFile);
+  if(arr.length===0) return `<div class="hint">(no file attached)</div>`;
+  return arr.map(f=> fileBtn(f, (prefix?prefix+': ':'')+f.name)).join('<br>');
+}
+
+function hasPaper(exam){ return asFileArray(exam.paperFiles||exam.paperFile).length>0; }
+function avatarHTML(name, photo, size){
+  size = size || 40;
+  if(photo && photo.dataUrl) return `<img src="${photo.dataUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;">`;
+  const letter = (name||'?').trim().charAt(0).toUpperCase() || '?';
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--gold);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:${Math.round(size*0.45)}px;">${letter}</div>`;
+}
+function fileBtn(file, label){
+  if(!file || !file.dataUrl) return '';
+  const key = 'f'+Math.random().toString(36).slice(2,10);
+  window._previewFiles[key] = file;
+  const text = label || file.name || 'file';
+  return `<button type="button" class="dl" onclick="previewFile('${key}')">📄 ${text}</button>`;
+}
+function previewFile(key){
+  const file = window._previewFiles[key];
+  if(!file) return;
+  const type = file.type || (file.dataUrl.match(/^data:([^;]+);/)||[])[1] || '';
+  let body;
+  if(type.startsWith('image/')) body = `<img src="${file.dataUrl}">`;
+  else if(type==='application/pdf') body = `<iframe src="${file.dataUrl}"></iframe>`;
+  else body = `<p class="hint">Preview isn't available for this file type — use download instead.</p>`;
+  const overlay = document.createElement('div');
+  overlay.className = 'file-preview-overlay';
+  overlay.onclick = (e)=>{ if(e.target===overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div class="file-preview-modal">
+      <div class="file-preview-header">
+        <span>${file.name||'File'}</span>
+        <button onclick="this.closest('.file-preview-overlay').remove()">✕ Close</button>
+      </div>
+      <div class="file-preview-body">${body}</div>
+      <div class="file-preview-footer">
+        <a class="btn-ghost btn-sm" href="${file.dataUrl}" download="${file.name||'file'}">⬇ Download instead</a>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+/* ---------- brand header ---------- */
+function brandHTML(){
+  return `
+  <div class="brand" onclick="go('home')">
+    <svg viewBox="0 0 120 70" fill="none">
+      <path d="M18,46 Q4,40 8,26 Q10,18 20,20" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M102,46 Q116,40 112,26 Q110,18 100,20" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="60" cy="42" rx="22" ry="14" fill="var(--gold)"/>
+      <circle cx="60" cy="42" r="6" fill="var(--on-accent)"/>
+      <path d="M78,36 Q96,30 100,16 Q102,8 92,4" stroke="var(--gold)" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <circle cx="86" cy="26" r="3" fill="var(--gold)"/>
+      <circle cx="94" cy="15" r="3" fill="var(--gold)"/>
+      <path d="M92,4 L98,-2 L96,8 Z" fill="var(--sting)" transform="translate(0,4)"/>
+    </svg>
+    <span class="brand-name">Math Scorpion</span>
+  </div>
+  <div class="brand-tail"></div>`;
+}
+
+/* ================= HOME ================= */
+function homeView(){
+  return `
+  ${brandHTML()}
+  <p class="tagline">From Stuck to Sharp</p>
+  <span class="eyebrow">Math practice &amp; exams</span>
+  <h1 style="font-size:1.6rem;margin-bottom:6px;">Fractions, algebra, calculus — sorted automatically or marked by hand.</h1>
+  <p class="subtext">Pick how you're joining today.</p>
+  <div class="role-grid">
+    <div class="role-card" onclick="go('learnerAuth')">
+      <div class="ic">🦂</div>
+      <h3>I'm a learner</h3>
+      <p>Practice, sit exams, get instant feedback</p>
+    </div>
+    <div class="role-card" onclick="go('teacherAuth')">
+      <div class="ic">📐</div>
+      <h3>I'm a teacher</h3>
+      <p>Set questions, schedule exams, mark work</p>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:30px;">
+    <button class="link-btn" style="color:var(--sand-dim);" onclick="go('adminLogin')">Admin</button>
+  </div>`;
+}
+
+/* ================= SUPERADMIN ================= */
+function adminLoginView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Admin access</h2>
+    <p class="subtext">Platform-wide stats — for the app owner only.</p>
+    <label>Password</label>
+    <div class="pw-wrap"><input id="admin-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('admin-pass',this)">Show</button></div>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="checkAdminLogin()">Enter</button>
+    <button class="btn-ghost" onclick="go('home')">Back</button>
+  </div>`;
+}
+async function checkAdminLogin(){
+  const pass = val('admin-pass');
+  if(pass !== ADMIN_PASSWORD){ setErr('Incorrect password.'); return; }
+  await openAdminDashboard();
+}
+let adminStats = null;
+async function openAdminDashboard(){
+  const [learnerKeys, teacherKeys, examKeys, resultKeys, noteKeys, groupKeys] = await Promise.all([
+    sList('learner:'), sList('teacher:'), sList('exam:'), sList('examresult:'), sList('note:'), sList('group:')
+  ]);
+  const [learners, teachers] = await Promise.all([
+    Promise.all(learnerKeys.map(k=>sGet(k))),
+    Promise.all(teacherKeys.map(k=>sGet(k)))
+  ]);
+  const schools = {};
+  learners.filter(Boolean).forEach(l=>{
+    const s = (l.school||'Unknown').trim() || 'Unknown';
+    if(!schools[s]) schools[s] = { learners:0, teachers:0 };
+    schools[s].learners++;
+  });
+  teachers.filter(Boolean).forEach(t=>{
+    const s = (t.school||'Unknown').trim() || 'Unknown';
+    if(!schools[s]) schools[s] = { learners:0, teachers:0 };
+    schools[s].teachers++;
+  });
+  adminStats = {
+    totalLearners: learnerKeys.length,
+    totalTeachers: teacherKeys.length,
+    totalExams: examKeys.length,
+    totalSubmissions: resultKeys.length,
+    totalNotes: noteKeys.length,
+    totalGroups: groupKeys.length,
+    schools: Object.entries(schools).map(([name, v])=>({ name, ...v })).sort((a,b)=> (b.learners+b.teachers)-(a.learners+a.teachers))
+  };
+  go('adminDashboard');
+}
+function adminDashboardView(){
+  const s = adminStats;
+  if(!s) return `${brandHTML()}<p class="subtext">Loading…</p>`;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Platform overview</h2>
+    <div class="row3">
+      <div class="qbuilder-item" style="text-align:center;"><div class="big" style="font-size:1.8rem;color:var(--gold);font-family:'Fraunces',serif;">${s.totalLearners}</div><div class="hint">Learners</div></div>
+      <div class="qbuilder-item" style="text-align:center;"><div class="big" style="font-size:1.8rem;color:var(--gold);font-family:'Fraunces',serif;">${s.totalTeachers}</div><div class="hint">Teachers</div></div>
+      <div class="qbuilder-item" style="text-align:center;"><div class="big" style="font-size:1.8rem;color:var(--gold);font-family:'Fraunces',serif;">${s.schools.length}</div><div class="hint">Schools</div></div>
+    </div>
+    <div class="row3" style="margin-top:10px;">
+      <div class="qbuilder-item" style="text-align:center;"><div class="big" style="font-size:1.8rem;color:var(--gold);font-family:'Fraunces',serif;">${s.totalExams}</div><div class="hint">Exams</div></div>
+      <div class="qbuilder-item" style="text-align:center;"><div class="big" style="font-size:1.8rem;color:var(--gold);font-family:'Fraunces',serif;">${s.totalSubmissions}</div><div class="hint">Submissions</div></div>
+      <div class="qbuilder-item" style="text-align:center;"><div class="big" style="font-size:1.8rem;color:var(--gold);font-family:'Fraunces',serif;">${s.totalNotes}</div><div class="hint">Notes</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>By school</h2>
+    ${s.schools.length===0 ? '<p class="subtext">No schools yet.</p>' : `
+    <table class="resulttable">
+      <tr><th>School</th><th>Learners</th><th>Teachers</th></tr>
+      ${s.schools.map(sc=>`<tr><td>${sc.name}</td><td>${sc.learners}</td><td>${sc.teachers}</td></tr>`).join('')}
+    </table>`}
+  </div>
+  <button class="btn-ghost btn-sm" onclick="openAdminDashboard()">Refresh</button>
+  <button class="btn-ghost" onclick="go('home')">Exit admin</button>`;
+}
+
+/* ================= LEARNER AUTH ================= */
+let learnerAuthMode = 'login';
+function learnerAuthView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <div class="toggle-row">
+      <button class="${learnerAuthMode==='login'?'active':''}" onclick="learnerAuthMode='login';render()">Log in</button>
+      <button class="${learnerAuthMode==='signup'?'active':''}" onclick="learnerAuthMode='signup';render()">Sign up</button>
+    </div>
+    ${learnerAuthMode==='login' ? learnerLoginForm() : learnerSignupForm()}
+    <div class="err">${state.err}</div>
+  </div>`;
+}
+function learnerLoginForm(){
+  return `
+  <h2 style="margin-top:10px;">Welcome back</h2>
+  <p class="subtext">Log in with your full name or username, and your password.</p>
+  <label>Full name or username</label>
+  <input id="ll-name" placeholder="e.g. mwiz01 or your full name">
+  <label>Password</label>
+  <div class="pw-wrap"><input id="ll-pass" type="password" placeholder="Your password"><button type="button" class="pw-toggle" onclick="togglePw('ll-pass',this)">Show</button></div>
+  <button class="btn-primary" onclick="learnerLogin()">Log in</button>
+  <button class="btn-ghost" onclick="go('learnerForgot')">Forgot password?</button>`;
+}
+function learnerSignupForm(){
+  return `
+  <h2 style="margin-top:10px;">Create your account</h2>
+  <p class="subtext">Fill in your details — you'll log in with your username or full name, plus your password.</p>
+  <label>Full name</label>
+  <input id="ls-fullname" placeholder="e.g. Jane Wanjiru Otieno">
+  <label>Username</label>
+  <input id="ls-username" placeholder="e.g. mwiz01">
+  <p class="hint">At least 3 letters followed by a number, e.g. mwiz01. Must be unique.</p>
+  <div class="row2">
+    <div><label>School</label><input id="ls-school" placeholder="e.g. Green Valley Primary"></div>
+    <div><label>Grade</label><select id="ls-grade">${gradeOptions('1')}</select></div>
+  </div>
+  <label>Email (for password recovery)</label>
+  <input id="ls-email" type="email" placeholder="you@example.com">
+  <div class="row2">
+    <div><label>Password</label><div class="pw-wrap"><input id="ls-pass" type="password" placeholder="At least 4 chars, letters + numbers"><button type="button" class="pw-toggle" onclick="togglePw('ls-pass',this)">Show</button></div></div>
+    <div><label>Confirm password</label><div class="pw-wrap"><input id="ls-pass2" type="password"><button type="button" class="pw-toggle" onclick="togglePw('ls-pass2',this)">Show</button></div></div>
+  </div>
+  <button class="btn-primary" onclick="learnerSignup()">Sign up</button>`;
+}
+async function learnerSignup(){
+  const fullNameVal=val('ls-fullname'), username=val('ls-username'), school=val('ls-school'),
+        grade=val('ls-grade'), email=val('ls-email'), pass=val('ls-pass'), pass2=val('ls-pass2');
+  if(!fullNameVal||!username||!school||!email||!pass||!pass2){ setErr('Please fill in every field.'); return; }
+  if(!USERNAME_RE.test(username)){ setErr('Username needs at least 3 letters followed by a number, e.g. mwiz01.'); return; }
+  if(!validPassword(pass)){ setErr('Password must be at least 4 characters with a mix of letters and numbers.'); return; }
+  if(pass!==pass2){ setErr('Passwords do not match.'); return; }
+  const uk = keyify(username);
+  const nk = keyify(fullNameVal);
+  const takenUser = await sGet('learner:'+uk);
+  if(takenUser){ setErr('That username is taken — pick another.'); return; }
+  const takenName = await sGet('learnername:'+nk);
+  if(takenName){ setErr('An account with that name already exists — try logging in.'); return; }
+  const learner = { fullName: fullNameVal, username, school, grade, email, password: pass, theme:'cream' };
+  await sSet('learner:'+uk, learner);
+  await sSet('learnername:'+nk, { usernameKey: uk });
+  toast('Account created — welcome!', 'good');
+  applyTheme('cream');
+  go('learnerDashboard', { learner });
+}
+async function resolveLearner(identifier){
+  const k = keyify(identifier);
+  let learner = await sGet('learner:'+k);
+  let key = k;
+  if(!learner){
+    const map = await sGet('learnername:'+k);
+    if(map){ learner = await sGet('learner:'+map.usernameKey); key = map.usernameKey; }
+  }
+  return { learner, key };
+}
+async function learnerLogin(){
+  const id=val('ll-name'), pass=val('ll-pass');
+  if(!id||!pass){ setErr('Enter your name or username, and your password.'); return; }
+  const { learner } = await resolveLearner(id);
+  if(!learner || learner.password !== pass){ setErr('Name/username or password is incorrect.'); return; }
+  applyTheme(learner.theme==='dark' ? 'dark' : 'cream');
+  go('learnerDashboard', { learner });
+}
+
+let recoveryCode = null, recoveryKey = null;
+function learnerForgotView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Reset password</h2>
+    <p class="subtext">This demo can't send real email — it will show your reset code on screen instead of emailing it.</p>
+    ${!recoveryCode ? `
+      <label>Full name or username</label>
+      <input id="lf-name" placeholder="e.g. mwiz01 or your full name">
+      <button class="btn-primary" onclick="requestReset()">Send reset code</button>
+    ` : `
+      <p class="ok">Your reset code is <span class="mono" style="color:var(--gold)">${recoveryCode}</span> (in a real deployment this would be emailed to you).</p>
+      <label>Enter the code</label>
+      <input id="lf-code" placeholder="Reset code">
+      <label>New password</label>
+      <div class="pw-wrap"><input id="lf-new" type="password" placeholder="At least 4 chars, letters + numbers"><button type="button" class="pw-toggle" onclick="togglePw('lf-new',this)">Show</button></div>
+      <label>Confirm new password</label>
+      <div class="pw-wrap"><input id="lf-new2" type="password"><button type="button" class="pw-toggle" onclick="togglePw('lf-new2',this)">Show</button></div>
+      <button class="btn-primary" onclick="confirmReset()">Reset password</button>
+    `}
+    <div class="err">${state.err}</div>
+    <button class="btn-ghost" onclick="recoveryCode=null;go('learnerAuth')">Back to login</button>
+  </div>`;
+}
+async function requestReset(){
+  const id = val('lf-name');
+  if(!id){ setErr('Enter your full name or username.'); return; }
+  const { learner, key } = await resolveLearner(id);
+  if(!learner){ setErr('No account found with that name or username.'); return; }
+  recoveryKey = key;
+  recoveryCode = Math.random().toString(36).slice(2,8).toUpperCase();
+  render();
+}
+async function confirmReset(){
+  const code = val('lf-code'), pass = val('lf-new'), pass2 = val('lf-new2');
+  if(code !== recoveryCode){ setErr('That code is incorrect.'); return; }
+  if(!validPassword(pass)){ setErr('Password must be at least 4 characters with a mix of letters and numbers.'); return; }
+  if(pass!==pass2){ setErr('Passwords do not match.'); return; }
+  const learner = await sGet('learner:'+recoveryKey);
+  learner.password = pass;
+  await sSet('learner:'+recoveryKey, learner);
+  recoveryCode = null;
+  toast('Password reset — log in now', 'good');
+  go('learnerAuth');
+}
+
+/* ================= SIDEBAR MENU ================= */
+let hamburgerOpen = false;
+function toggleHamburger(){ hamburgerOpen = !hamburgerOpen; render(); }
+function hamburgerNav(fn){ hamburgerOpen = false; fn(); }
+function sidebarLogout(){
+  applyTheme('cream'); selectedGrade=null; viewHistory=[]; hamburgerOpen=false;
+  go('home',{learner:null});
+}
+
+/* ---------- unread badges (notifications + messages) ---------- */
+let unreadNotifCount = 0, unreadMsgCount = 0;
+function badgeHTML(count, id){
+  return `<span id="${id}" class="badge-dot" style="${count>0?'':'display:none;'}">${count>9?'9+':count}</span>`;
+}
+function updateBadgeDOM(){
+  const total = unreadNotifCount + unreadMsgCount;
+  const hb = document.getElementById('hamburger-badge');
+  if(hb) hb.outerHTML = badgeHTML(total, 'hamburger-badge');
+  const nb = document.getElementById('notif-badge');
+  if(nb) nb.outerHTML = badgeHTML(unreadNotifCount, 'notif-badge');
+  const mb = document.getElementById('msg-badge');
+  if(mb) mb.outerHTML = badgeHTML(unreadMsgCount, 'msg-badge');
+}
+async function myConversationKeys(){
+  const me = myIdentity();
+  const groupKeys = await sList('group:');
+  const allGroups = (await Promise.all(groupKeys.map(k=>sGet(k)))).filter(Boolean);
+  const myGroups = me.role==='learner'
+    ? allGroups.filter(g=>String(g.grade)===String(me.grade) && sameSchool(g.school, me.school))
+    : allGroups.filter(g=>sameSchool(g.school, me.school));
+  const dmIdxKeys = await sList('dmindex:'+me.usernameKey+':');
+  const dmRefs = (await Promise.all(dmIdxKeys.map(k=>sGet(k)))).filter(Boolean);
+  const myDMs = (await Promise.all(dmRefs.map(d=>sGet('dm:'+d.dmId)))).filter(Boolean);
+  return [...myGroups.map(g=>'group:'+g.id), ...myDMs.map(d=>'dm:'+d.id)];
+}
+async function markChatRead(convoKey){
+  const me = myIdentity();
+  if(!me) return;
+  await sSet('chatread:'+convoKey+':'+me.usernameKey, { lastReadAt: new Date().toISOString() });
+}
+async function refreshUnreadCounts(){
+  if(!state.learner) return;
+  const me = myIdentity();
+  const lastNotif = state.learner.lastNotifSeenAt || '1970-01-01';
+  const nKeys = await sList('notif:');
+  const allNotifs = (await Promise.all(nKeys.map(k=>sGet(k)))).filter(Boolean);
+  unreadNotifCount = allNotifs.filter(n=>{
+    const relevant = n.type==='marks' ? n.learnerKey===me.usernameKey
+      : (String(n.grade)===String(state.learner.grade) && sameSchool(n.school, state.learner.school));
+    return relevant && n.createdAt > lastNotif;
+  }).length;
+
+  const convoKeys = await myConversationKeys();
+  let total = 0;
+  for(const ck of convoKeys){
+    const readDoc = await sGet('chatread:'+ck+':'+me.usernameKey);
+    const lastRead = readDoc ? readDoc.lastReadAt : '1970-01-01';
+    const mKeys = await sList('msg:'+ck+':');
+    const msgs = (await Promise.all(mKeys.map(k=>sGet(k)))).filter(Boolean);
+    total += msgs.filter(m=>m.senderUsername!==me.usernameKey && m.sentAt>lastRead).length;
+  }
+  unreadMsgCount = total;
+  updateBadgeDOM();
+}
+
+function menuBarHTML(active){
+  return `
+  <div class="sidebar">
+    <button onclick="goBack()" title="Back">←</button>
+    <button onclick="toggleHamburger()" title="Menu">☰${badgeHTML(unreadNotifCount+unreadMsgCount,'hamburger-badge')}</button>
+    <button class="${active==='dashboard'?'active':''}" onclick="go('learnerDashboard')" title="Home">🏠</button>
+    <button class="${active==='notes'?'active':''}" onclick="openClassNotes()" title="Classroom notes">📝</button>
+    <button class="${active==='results'?'active':''}" onclick="openLearnerResults()" title="Check results">📊</button>
+    <button class="${active==='leaderboard'?'active':''}" onclick="openLeaderboard()" title="Leaderboard">🏆</button>
+    <div class="sidebar-spacer"></div>
+    <button onclick="sidebarLogout()" title="Log out">🚪</button>
+  </div>
+  <div class="sidebar-scrim ${hamburgerOpen?'open':''}" onclick="toggleHamburger()"></div>
+  <div class="sidebar-drawer ${hamburgerOpen?'open':''}">
+    <button onclick="hamburgerNav(()=>go('accountInfo'))">👤 Account info</button>
+    <button onclick="hamburgerNav(openHistory)">🕐 History</button>
+    <button onclick="hamburgerNav(openClassroom)">🧑‍🤝‍🧑 Classroom</button>
+    <button onclick="hamburgerNav(()=>go('learnerSettings'))">⚙️ Settings</button>
+    <button onclick="hamburgerNav(openNotifications)">🔔 Notifications${badgeHTML(unreadNotifCount,'notif-badge')}</button>
+    <button onclick="hamburgerNav(openMessages)">✉️ Messages${badgeHTML(unreadMsgCount,'msg-badge')}</button>
+    <a href="https://wa.me/254788747386" target="_blank" rel="noopener">💬 Help</a>
+  </div>`;
+}
+
+/* ================= LEARNER DASHBOARD ================= */
+function learnerDashboardView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('dashboard')}
+  <div class="who" style="display:flex;align-items:center;gap:10px;">
+    ${avatarHTML(fullName(state.learner), state.learner.photo, 36)}
+    <span>Logged in as <b>${fullName(state.learner)}</b> · Grade ${state.learner.grade}${state.learner.school ? ' · '+state.learner.school : ''}</span>
+  </div>
+  ${streakCardHTML()}
+  <div class="card" style="margin-top:16px;">
+    <h2>Enter an exam code</h2>
+    <p class="subtext">Ask your teacher for the code, e.g. MS4K2.</p>
+    <input id="ec-code" class="mono" placeholder="MS___" style="text-transform:uppercase;">
+    <button class="btn-primary" onclick="enterExamCode()">Go</button>
+    <div class="err">${state.err}</div>
+  </div>
+  <div class="card">
+    <h2>Homework</h2>
+    <div id="homework-list" class="center"><span class="spinner"></span></div>
+  </div>
+  <div class="card">
+    <h2>Practice</h2>
+    <p class="subtext">Untimed multiple-choice practice, pulled from past questions for your grade. Doesn't count anywhere — retake as often as you like.</p>
+    <label>Topic</label>
+    <select id="pr-topic">${TOPICS.map(t=>`<option>${t}</option>`).join('')}</select>
+    <button class="btn-primary" onclick="startPractice()">Start practice</button>
+    <div class="err" id="pr-err"></div>
+  </div>`;
+}
+async function renderHomeworkList(){
+  const el = document.getElementById('homework-list');
+  if(!el) return;
+  const keys = await sList('exam:');
+  const all = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const homework = all.filter(e => e.untimed && String(e.grade)===String(state.learner.grade) && sameSchool(e.school, state.learner.school));
+  if(homework.length===0){ el.innerHTML = '<p class="subtext">Nothing assigned right now.</p>'; return; }
+  const lk = keyify(fullName(state.learner));
+  const withStatus = await Promise.all(homework.map(async e=>{
+    const result = await sGet('examresult:'+e.code+':'+lk);
+    return { e, result };
+  }));
+  el.innerHTML = withStatus.map(({e,result})=>{
+    const overdue = e.dueAt && Date.now() > new Date(e.dueAt).getTime();
+    return `<div class="exam-item">
+      <div class="row">
+        <div>
+          <div style="font-weight:600;">${e.title}</div>
+          <div class="subtext" style="margin:2px 0 0;">${e.topic} · due ${new Date(e.dueAt).toLocaleString()}</div>
+        </div>
+        <div>
+          ${result ? '<span class="badge badge-live">Submitted</span>' : overdue ? '<span class="badge badge-closed">Overdue</span>' : '<span class="badge badge-upcoming">To do</span>'}
+        </div>
+      </div>
+      <div class="exam-actions">
+        <button class="btn-ghost btn-sm" onclick="startAssignment('${e.code}')">${result?'View':'Start'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function startAssignment(code){
+  const exam = await sGet('exam:'+code);
+  if(!exam){ toast('Homework not found.', 'bad'); return; }
+  const lk = keyify(fullName(state.learner));
+  const prior = await sGet('examresult:'+code+':'+lk);
+  if(prior){ go('examResult', { activeExam: exam, feedback: prior }); return; }
+  const startIndex = hasPaper(exam) ? -1 : 0;
+  go('examTaking', { activeExam: exam, qIndex:startIndex, answers:new Array(exam.questions.length).fill(null), paperAnswerFiles:[], shortLocked:{}, shortCorrect:{} });
+}
+/* ================= PRACTICE MODE (untimed, ungraded, unlimited retakes) ================= */
+let practiceQuestions = [], practiceIndex = 0, practiceScore = 0, practiceAnswered = null, practiceGiven = null, practiceCorrect = false, practiceTopic = '';
+async function startPractice(){
+  const topicEl = document.getElementById('pr-topic');
+  const topic = topicEl ? topicEl.value : practiceTopic;
+  const keys = await sList('exam:');
+  const all = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const matching = all.filter(e => String(e.grade)===String(state.learner.grade) && e.topic===topic && sameSchool(e.school, state.learner.school));
+  let pool = [];
+  matching.forEach(e => e.questions.forEach(q => { if(q.type==='mcq' || q.type==='short') pool.push(q); }));
+  if(pool.length===0){
+    const el = document.getElementById('pr-err');
+    if(el) el.textContent = 'No practice questions found yet for '+topic+' at your grade.';
+    return;
+  }
+  practiceQuestions = pool.sort(()=>Math.random()-0.5).slice(0,15);
+  practiceTopic = topic; practiceIndex = 0; practiceScore = 0; practiceAnswered = null; practiceGiven = null;
+  go('practiceQuiz');
+}
+function practiceQuizView(){
+  const q = practiceQuestions[practiceIndex];
+  const pct = Math.round((practiceIndex/practiceQuestions.length)*100);
+  let body;
+  if(q.type==='mcq'){
+    body = q.options.map((opt,i)=>{
+      let cls='option';
+      if(practiceAnswered!==null){
+        if(i===q.correctIndex) cls+=' correct';
+        else if(i===practiceGiven) cls+=' wrong';
+      }
+      const disabled = practiceAnswered!==null ? 'disabled' : '';
+      return `<button class="${cls}" ${disabled} onclick="answerPracticeMCQ(${i})">${opt}</button>`;
+    }).join('');
+  } else {
+    body = `
+      <input id="practice-short-input" value="${practiceGiven||''}" ${practiceAnswered!==null?'disabled':''} placeholder="Type your answer" oninput="practiceGiven=this.value">
+      ${practiceAnswered!==null
+        ? `<div class="hint" style="margin-top:8px;">${practiceCorrect ? '✅ Correct' : '❌ Accepted answer(s): '+q.acceptedAnswers.join(', ')}</div>`
+        : `<button class="btn-ghost btn-sm" style="margin-top:10px;" onclick="answerPracticeShort()">Check answer</button>`}`;
+  }
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <div class="qcount"><span class="subtext" style="margin:0;">Practice · ${practiceTopic}</span><span class="subtext" style="margin:0;">Question ${practiceIndex+1} / ${practiceQuestions.length}</span></div>
+    <div class="progress"><div class="progress-fill" style="width:${pct}%;"></div></div>
+    <h2 style="margin-bottom:16px;">${q.text}</h2>
+    ${q.image ? `<img src="${q.image.dataUrl}" style="max-width:100%; border-radius:9px; margin-bottom:14px;">` : ''}
+    ${body}
+    ${practiceAnswered!==null ? `<button class="btn-primary" style="margin-top:14px;" onclick="nextPractice()">${practiceIndex+1===practiceQuestions.length?'Finish':'Next question'}</button>` : ''}
+  </div>
+  <button class="btn-ghost" onclick="go('learnerDashboard')">Exit practice</button>`;
+}
+function answerPracticeMCQ(i){
+  const q = practiceQuestions[practiceIndex];
+  practiceAnswered = true; practiceGiven = i;
+  practiceCorrect = (i===q.correctIndex);
+  if(practiceCorrect){ practiceScore++; toast('Correct! 🎉', 'good'); }
+  else toast('Not quite — correct answer highlighted', 'bad');
+  render();
+}
+function answerPracticeShort(){
+  const q = practiceQuestions[practiceIndex];
+  const given = practiceGiven || '';
+  if(!given.trim()){ toast('Type an answer first.', 'bad'); return; }
+  practiceAnswered = true;
+  practiceCorrect = isShortAnswerCorrect(given, q.acceptedAnswers||[]);
+  if(practiceCorrect){ practiceScore++; toast('Correct! 🎉', 'good'); }
+  else toast('Not quite — see accepted answer', 'bad');
+  render();
+}
+function nextPractice(){
+  if(practiceIndex+1 < practiceQuestions.length){ practiceIndex++; practiceAnswered=null; practiceGiven=null; render(); return; }
+  recordActivity();
+  go('practiceResult');
+}
+function practiceResultView(){
+  return `
+  ${brandHTML()}
+  <div class="card score-hero">
+    <div class="eyebrow">Practice · ${practiceTopic}</div>
+    <div class="big">${practiceScore}/${practiceQuestions.length}</div>
+    <div class="msg">This doesn't count anywhere — practice as much as you like.</div>
+  </div>
+  <button class="btn-primary" onclick="startPractice()">Practice again</button>
+  <button class="btn-ghost" onclick="go('learnerDashboard')">Back to dashboard</button>`;
+}
+
+async function enterExamCode(){
+  const code = val('ec-code').toUpperCase().trim();
+  if(!code){ setErr('Enter a code.'); return; }
+  const exam = await sGet('exam:'+code);
+  if(!exam){ setErr('No exam found with that code.'); return; }
+  const now = Date.now();
+  const openAt = new Date(exam.openAt).getTime();
+  const closeAt = openAt + exam.durationMinutes*60000;
+  const rk = 'examresult:'+code+':'+keyify(fullName(state.learner));
+  const prior = await sGet(rk);
+  if(prior){ go('examResult', { activeExam: exam, feedback: prior }); return; }
+  if(now < openAt){ setErr('This exam opens at '+new Date(openAt).toLocaleString()+'.'); return; }
+  if(now > closeAt){ setErr('This exam has closed.'); return; }
+  const startIndex = hasPaper(exam) ? -1 : 0;
+  startExamTimers();
+  go('examTaking', { activeExam: exam, qIndex:startIndex, answers:new Array(exam.questions.length).fill(null), paperAnswerFiles:[], shortLocked:{}, shortCorrect:{} });
+}
+
+/* ---------- countdown timer (also syncs extra time a teacher adds mid-exam) ---------- */
+let examTimerInterval = null, examTimerTick = 0;
+function formatRemaining(exam){
+  const closeAt = new Date(exam.openAt).getTime() + exam.durationMinutes*60000;
+  const remaining = closeAt - Date.now();
+  if(remaining<=0) return "Time's up";
+  const mm = Math.floor(remaining/60000), ss = Math.floor((remaining%60000)/1000);
+  return mm+':'+String(ss).padStart(2,'0')+' remaining';
+}
+function startExamTimers(){
+  examTimerTick = 0;
+  if(examTimerInterval) clearInterval(examTimerInterval);
+  examTimerInterval = setInterval(examTimerLoop, 1000);
+}
+async function examTimerLoop(){
+  const el = document.getElementById('exam-countdown');
+  if(!el || !state.activeExam){ clearInterval(examTimerInterval); examTimerInterval=null; return; }
+  examTimerTick++;
+  if(examTimerTick % 20 === 0){
+    const latest = await sGet('exam:'+state.activeExam.code);
+    if(latest) state.activeExam.durationMinutes = latest.durationMinutes;
+  }
+  const exam = state.activeExam;
+  const closeAt = new Date(exam.openAt).getTime() + exam.durationMinutes*60000;
+  if(closeAt - Date.now() <= 0){
+    clearInterval(examTimerInterval); examTimerInterval=null;
+    toast("Time's up — submitting your exam", 'info');
+    finishExam();
+    return;
+  }
+  el.textContent = formatRemaining(exam);
+}
+
+/* ================= EXAM TAKING ================= */
+function examTakingView(){
+  const exam = state.activeExam;
+  if(state.qIndex === -1) return examPaperStepView(exam);
+  const q = exam.questions[state.qIndex];
+  const pct = Math.round((state.qIndex/exam.questions.length)*100);
+  const isLast = state.qIndex+1===exam.questions.length;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    ${exam.untimed ? '<div class="hint" style="text-align:center;margin-bottom:12px;">Homework · due '+new Date(exam.dueAt).toLocaleString()+'</div>' : `<div id="exam-countdown" class="timer-badge">${formatRemaining(exam)}</div>`}
+    <div class="qcount"><span class="subtext" style="margin:0;">${exam.title}</span><span class="subtext" style="margin:0;">${questionHeading(q,state.qIndex)} of ${exam.questions.length}</span></div>
+    <div class="progress"><div class="progress-fill" style="width:${pct}%;"></div></div>
+    <h2 style="margin-bottom:6px;">${q.text}<span class="type-tag type-${q.type}">${typeLabel(q.type)}</span></h2>
+    ${q.image ? `<img src="${q.image.dataUrl}" style="max-width:100%; border-radius:9px; margin:10px 0;">` : ''}
+    ${q.type!=='mcq' ? `<p class="subtext" style="margin-top:8px;">Marked by your teacher · worth ${q.points||1} point${(q.points||1)>1?'s':''}</p>` : ''}
+    <div style="margin-top:16px;">
+    ${questionInputHTML(q, state.qIndex)}
+    </div>
+    <div style="display:flex; gap:10px;">
+      ${state.qIndex>0 || hasPaper(exam) ? `<button class="btn-ghost" style="margin-top:20px;flex:1;" onclick="prevQuestion()">Previous</button>` : ''}
+      <button class="btn-primary" style="flex:2;" onclick="nextQuestion()">${isLast?'Review answers':'Next question'}</button>
+    </div>
+  </div>`;
+}
+function normalizeAnswer(s){
+  return (s||'').toString().trim().toLowerCase().replace(/\s+/g,'').replace(/^x=/,'');
+}
+function isShortAnswerCorrect(given, accepted){
+  const g = normalizeAnswer(given);
+  if(!g) return false;
+  return (accepted||[]).some(a => normalizeAnswer(a) === g);
+}
+function typeLabel(t){ return t==='mcq'?'Multiple choice': t==='short'?'Short answer': t==='upload'?'File upload': 'Written answer'; }
+function questionHeading(q, idx){
+  return (q.groupLabel && q.partLabel) ? q.groupLabel+' ('+q.partLabel+')' : 'Q'+(idx+1);
+}
+
+function questionInputHTML(q, idx){
+  if(q.type==='mcq'){
+    const picked = state.answers[idx];
+    return q.options.map((opt,i)=>{
+      let cls='option';
+      if(picked!==null && picked!==undefined){
+        if(i===q.correctIndex) cls+=' correct';
+        else if(i===picked) cls+=' wrong';
+      }
+      const disabled = (picked!==null && picked!==undefined) ? 'disabled' : '';
+      return `<button class="${cls}" ${disabled} onclick="answerMCQ(${i})">${opt}</button>`;
+    }).join('');
+  }
+  if(q.type==='short'){
+    const locked = state.shortLocked && state.shortLocked[idx];
+    const a = state.answers[idx] || '';
+    return `
+      <input id="short-input-${idx}" value="${a}" ${locked?'disabled':''} placeholder="Type your answer" oninput="state.answers[${idx}]=this.value; updateLivePreview(this.value,'short-preview-${idx}')">
+      <div id="short-preview-${idx}" class="hint" style="min-height:1.2em;"></div>
+      ${locked
+        ? `<div class="hint" style="margin-top:8px;">${state.shortCorrect[idx] ? '✅ Correct' : '❌ Not quite — accepted answer(s): '+q.acceptedAnswers.join(', ')}</div>`
+        : `<button class="btn-ghost btn-sm" style="margin-top:10px;" onclick="checkShortAnswer(${idx})">Check answer</button>`}`;
+  }
+  if(q.type==='upload'){
+    const files = asFileArray(state.answers[idx]);
+    return `
+      <input type="file" multiple onchange="answerUpload(this, ${idx})">
+      <div id="upload-status-${idx}" class="hint">${files.length ? 'Attached: '+files.map(f=>f.name).join(', ') : 'No file attached yet.'}</div>`;
+  }
+  // text
+  const a = state.answers[idx] || '';
+  return `<textarea placeholder="Write your explanation here..." oninput="state.answers[${idx}]=this.value">${a}</textarea>`;
+}
+function checkShortAnswer(idx){
+  const q = state.activeExam.questions[idx];
+  const given = state.answers[idx]||'';
+  if(!given.trim()){ toast('Type an answer first.', 'bad'); return; }
+  if(!state.shortLocked) state.shortLocked = {};
+  if(!state.shortCorrect) state.shortCorrect = {};
+  const correct = isShortAnswerCorrect(given, q.acceptedAnswers||[]);
+  state.shortLocked[idx] = true;
+  state.shortCorrect[idx] = correct;
+  toast(correct ? 'Correct! 🎉' : 'Not quite — see accepted answer', correct?'good':'bad');
+  render();
+}
+
+function answerMCQ(i){
+  const exam = state.activeExam;
+  const q = exam.questions[state.qIndex];
+  state.answers[state.qIndex] = i;
+  if(i===q.correctIndex) toast('Correct! 🎉', 'good');
+  else toast('Not quite — correct answer highlighted', 'bad');
+  render();
+}
+async function answerUpload(inputEl, idx){
+  const newFiles = await pickFiles(inputEl);
+  if(newFiles.length===0) return;
+  if(!Array.isArray(state.answers[idx])) state.answers[idx] = asFileArray(state.answers[idx]);
+  state.answers[idx].push(...newFiles);
+  document.getElementById('upload-status-'+idx).textContent = 'Attached: '+state.answers[idx].map(f=>f.name).join(', ');
+  toast(newFiles.length>1 ? newFiles.length+' files attached' : 'File attached', 'good');
+}
+
+function examPaperStepView(exam){
+  const paperFiles = asFileArray(exam.paperFiles||exam.paperFile);
+  const answerFiles = asFileArray(state.paperAnswerFiles);
+  return `
+  ${brandHTML()}
+  <div class="card">
+    ${exam.untimed ? '<div class="hint" style="text-align:center;margin-bottom:12px;">Homework · due '+new Date(exam.dueAt).toLocaleString()+'</div>' : `<div id="exam-countdown" class="timer-badge">${formatRemaining(exam)}</div>`}
+    <h2>${exam.title}</h2>
+    ${exam.instructions ? `<div class="hint" style="background:var(--surface2); border-radius:9px; padding:12px; margin-bottom:14px; white-space:pre-wrap;"><b style="color:var(--gold);">Instructions:</b> ${exam.instructions}</div>` : ''}
+    <p class="subtext">Your teacher attached ${paperFiles.length>1?'question papers':'a question paper'} for this exam.</p>
+    ${paperFiles.map(f=>fileBtn(f, f.name)).join('<br>')}
+    ${exam.allowPaperAnswerUpload ? `
+      <label>Upload your answer(s)</label>
+      <input type="file" multiple onchange="answerPaperUpload(this)">
+      <div id="paper-answer-status" class="hint">${answerFiles.length ? 'Attached: '+answerFiles.map(f=>f.name).join(', ') : 'No file attached yet.'}</div>
+    ` : ''}
+    <button class="btn-primary" onclick="continueFromPaper()">${exam.questions.length>0 ? 'Continue to questions' : 'Review & submit'}</button>
+  </div>`;
+}
+async function answerPaperUpload(inputEl){
+  const newFiles = await pickFiles(inputEl);
+  if(newFiles.length===0) return;
+  if(!Array.isArray(state.paperAnswerFiles)) state.paperAnswerFiles = [];
+  state.paperAnswerFiles.push(...newFiles);
+  document.getElementById('paper-answer-status').textContent = 'Attached: '+state.paperAnswerFiles.map(f=>f.name).join(', ');
+  toast(newFiles.length>1 ? newFiles.length+' files attached' : 'File attached', 'good');
+}
+function continueFromPaper(){
+  const exam = state.activeExam;
+  if(exam.questions.length>0){ state.qIndex = 0; render(); }
+  else { go('examReview'); }
+}
+
+function prevQuestion(){
+  const exam = state.activeExam;
+  if(state.qIndex>0){ state.qIndex--; render(); }
+  else if(hasPaper(exam)){ state.qIndex=-1; render(); }
+}
+async function nextQuestion(){
+  const exam = state.activeExam;
+  if(state.qIndex+1 < exam.questions.length){ state.qIndex++; render(); return; }
+  go('examReview');
+}
+
+/* ---------- pre-submission review: jump back to any question, then submit ---------- */
+function examReviewView(){
+  const exam = state.activeExam;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    ${exam.untimed ? '' : `<div id="exam-countdown" class="timer-badge">${formatRemaining(exam)}</div>`}
+    <h2>Review before you submit</h2>
+    <p class="subtext">Tap any question to go back and change your answer.</p>
+    ${hasPaper(exam) ? `<div class="hint" style="margin-bottom:10px;">Paper answer: ${asFileArray(state.paperAnswerFiles).length ? 'attached ('+asFileArray(state.paperAnswerFiles).map(f=>f.name).join(', ')+')' : 'not attached'}</div>` : ''}
+    ${exam.questions.map((q,i)=>{
+      const answered = q.type==='mcq' ? (state.answers[i]!==null && state.answers[i]!==undefined)
+        : q.type==='upload' ? !!state.answers[i] : !!(state.answers[i] && state.answers[i].trim());
+      return `<div class="qbuilder-item" style="cursor:pointer;" onclick="state.qIndex=${i};go('examTaking')">
+        <div class="qtop"><span>${questionHeading(q,i)} · ${typeLabel(q.type)}</span><span class="${answered?'ok':'err'}" style="margin:0;">${answered?'Answered':'Not answered'}</span></div>
+        <div>${q.text}</div>
+      </div>`;
+    }).join('')}
+    <button class="btn-primary" onclick="finishExam()">Submit exam</button>
+  </div>`;
+}
+
+async function finishExam(){
+  if(examTimerInterval){ clearInterval(examTimerInterval); examTimerInterval=null; }
+  const exam = state.activeExam;
+  let autoScore=0, autoTotal=0, manualTotal=0;
+  exam.questions.forEach((q,i)=>{
+    if(q.type==='mcq'){ autoTotal++; if(state.answers[i]===q.correctIndex) autoScore++; }
+    else if(q.type==='short'){ autoTotal++; if(isShortAnswerCorrect(state.answers[i], q.acceptedAnswers||[])) autoScore++; }
+    else { manualTotal += (q.points||1); }
+  });
+  const result = {
+    learner: fullName(state.learner), code: exam.code,
+    examTitle: exam.title, examGrade: exam.grade, examTopic: exam.topic,
+    answers: state.answers,
+    paperAnswerFiles: asFileArray(state.paperAnswerFiles),
+    autoScore, autoTotal, manualTotal, marks:{},
+    submittedAt: new Date().toISOString()
+  };
+  await sSet('examresult:'+exam.code+':'+keyify(fullName(state.learner)), result);
+  await recordActivity();
+  go('examResult', { activeExam: exam, feedback: result });
+}
+
+function examResultView(){
+  const f = state.feedback;
+  const hasManual = f.manualTotal>0 || asFileArray(f.paperAnswerFiles||f.paperAnswerFile).length>0;
+  const pct = f.autoTotal>0 ? Math.round((f.autoScore/f.autoTotal)*100) : null;
+  const msg = pct===null ? "Submitted — awaiting your teacher's marking." : pct>=80 ? "Excellent work on the auto-marked questions!" : pct>=50 ? "Good effort — keep practicing." : "Keep going, you'll get there.";
+  return `
+  ${brandHTML()}
+  <div class="card score-hero">
+    <div class="eyebrow">${state.activeExam.title}</div>
+    ${pct!==null ? `<div class="big">${f.autoScore}/${f.autoTotal}</div>` : `<div class="big" style="font-size:1.6rem;">Submitted</div>`}
+    <div class="msg">${msg}</div>
+    ${hasManual ? `<div class="hint" style="margin-top:10px;">Some answers here are marked by hand — your teacher will add those marks.</div>` : ''}
+  </div>
+  <button class="btn-ghost" onclick="openAnswerReview('${state.activeExam.code}')">Review your answers</button>
+  <button class="btn-primary" onclick="go('learnerDashboard')">Back to dashboard</button>`;
+}
+
+/* ---------- read-only review of a submitted attempt (no marks shown, just what was written) ---------- */
+async function openAnswerReview(code, learnerKeyOverride){
+  const exam = await sGet('exam:'+code);
+  const lk = learnerKeyOverride || keyify(fullName(state.learner));
+  const result = await sGet('examresult:'+code+':'+lk);
+  if(!exam || !result){ toast('Could not load that submission.', 'bad'); return; }
+  go('examAnswerReview', { activeExam: exam, feedback: result });
+}
+function readOnlyQuestionHTML(q, answer, markInfo){
+  if(q.type==='mcq'){
+    return q.options.map((opt,i)=>{
+      let cls='option';
+      if(i===q.correctIndex) cls+=' correct';
+      else if(i===answer) cls+=' wrong';
+      return `<div class="${cls}">${opt}</div>`;
+    }).join('');
+  }
+  if(q.type==='short'){
+    const correct = isShortAnswerCorrect(answer, q.acceptedAnswers||[]);
+    return `<div class="option ${correct?'correct':'wrong'}">${answer||'(no answer)'}</div>${!correct?`<div class="hint" style="margin-top:6px;">Accepted answer(s): ${(q.acceptedAnswers||[]).join(', ')}</div>`:''}`;
+  }
+  const body = q.type==='upload' ? filesListHTML(answer) : `<div class="hint" style="white-space:pre-wrap;">${answer || '(no answer)'}</div>`;
+  return body + markInfo;
+}
+function examAnswerReviewView(){
+  const exam = state.activeExam, r = state.feedback;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>${exam.title} — your answers</h2>
+    ${hasPaper(exam) ? `<div class="hint" style="margin-bottom:10px;">
+      ${asFileArray(exam.paperFiles||exam.paperFile).map(f=>fileBtn(f,'Question paper: '+f.name)).join('<br>')}
+      ${asFileArray(r.paperAnswerFiles||r.paperAnswerFile).length ? '<br>'+asFileArray(r.paperAnswerFiles||r.paperAnswerFile).map(f=>fileBtn(f,'Your answer: '+f.name)).join('<br>') : ''}
+      ${r.marks && r.marks.paper!=null ? `<div style="margin-top:6px;"><b style="color:var(--gold);">Paper mark: ${r.marks.paper}</b></div>` : ''}
+    </div>` : ''}
+    ${exam.questions.map((q,i)=>{
+      let markInfo = '';
+      if(q.type!=='mcq' && q.type!=='short'){
+        const awarded = r.marks && r.marks[i]!=null ? r.marks[i] : null;
+        markInfo = `<div style="margin-top:8px;"><b style="color:var(--gold);">${awarded!==null ? 'Marks: '+awarded+'/'+(q.points||1) : 'Not yet marked'}</b></div>`;
+      }
+      return `
+      <div class="qbuilder-item">
+        <div class="qtop"><span>${questionHeading(q,i)} <span class="type-tag type-${q.type}">${typeLabel(q.type)}</span></span></div>
+        <div style="margin-bottom:8px;">${q.text}</div>
+        ${q.image ? `<img src="${q.image.dataUrl}" style="max-width:100%; border-radius:9px; margin-bottom:8px;">` : ''}
+        ${readOnlyQuestionHTML(q, r.answers[i], markInfo)}
+      </div>`;
+    }).join('')}
+  </div>
+  <button class="btn-ghost" onclick="goBack()">Back</button>`;
+}
+
+/* ---------- enrich a stored result with exam context, marks, and a percentage/rating ---------- */
+async function enrichResult(r){
+  const exam = await sGet('exam:'+r.code);
+  if(!exam) return { ...r, fullyMarked:false, pct:null, rating:null, untimed:false };
+  let manualAwarded=0, manualComplete=true;
+  exam.questions.forEach((q,i)=>{
+    if(q.type==='mcq' || q.type==='short') return;
+    if(r.marks && r.marks[i]!=null) manualAwarded += Number(r.marks[i]); else manualComplete=false;
+  });
+  let paperAwarded=0, paperComplete=true;
+  if(hasPaper(exam)){
+    if(r.marks && r.marks.paper!=null) paperAwarded = Number(r.marks.paper); else paperComplete=false;
+  }
+  const totalPossible = (r.autoTotal||0) + (r.manualTotal||0) + (hasPaper(exam) ? (exam.paperMaxMarks||0) : 0);
+  const totalAwarded = (r.autoScore||0) + manualAwarded + paperAwarded;
+  const fullyMarked = manualComplete && paperComplete;
+  const pct = (fullyMarked && totalPossible>0) ? Math.round((totalAwarded/totalPossible)*100) : null;
+  return { ...r, fullyMarked, totalPossible, totalAwarded, pct, rating: pct!==null ? ratingFor(pct) : null, untimed: !!exam.untimed };
+}
+
+/* ================= CHECK RESULTS (learner) ================= */
+let learnerResultsCache = [];
+async function openLearnerResults(){
+  const keys = await sList('examresult:');
+  const raw = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const lk = keyify(fullName(state.learner));
+  const mine = raw.filter(r=>keyify(r.learner)===lk);
+  learnerResultsCache = await Promise.all(mine.map(enrichResult));
+  learnerResultsCache.sort((a,b)=> new Date(b.submittedAt) - new Date(a.submittedAt));
+  go('learnerResults');
+}
+function learnerResultsView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('results')}
+  <div class="card">
+    <h2>Your results</h2>
+    ${learnerResultsCache.length===0 ? '<p class="subtext">No exams taken yet.</p>' : `
+    <table class="resulttable">
+      <tr><th>Title</th><th>Grade</th><th>Topic</th><th>Score</th><th>Rating</th><th>Date</th><th></th></tr>
+      ${learnerResultsCache.map(r=>`
+        <tr>
+          <td>${r.examTitle||'—'}${r.untimed?' <span class="hint">(homework)</span>':''}</td>
+          <td>${r.examGrade||'—'}</td>
+          <td>${r.examTopic||'—'}</td>
+          <td>${r.pct!==null ? r.pct+'%' : '<span class="hint">Pending</span>'}</td>
+          <td>${r.rating ? `<span class="rating ${ratingClass(r.rating)}">${r.rating}</span>` : '—'}</td>
+          <td class="hint">${new Date(r.submittedAt).toLocaleDateString()}</td>
+          <td><button class="btn-ghost btn-sm" onclick="openAnswerReview('${r.code}')">Review</button></td>
+        </tr>`).join('')}
+    </table>`}
+  </div>`;
+}
+
+/* ================= LEADERBOARD ================= */
+let leaderboardCache = [];
+async function openLeaderboard(){
+  if(!selectedGrade) selectedGrade = Number(state.learner ? state.learner.grade : 1);
+  const keys = await sList('examresult:');
+  const raw = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const enriched = await Promise.all(raw.map(enrichResult));
+  const filtered = enriched.filter(r=>r.fullyMarked && !r.untimed && String(r.examGrade)===String(selectedGrade));
+  const byLearner = {};
+  filtered.forEach(r=>{
+    if(!byLearner[r.learner]) byLearner[r.learner] = { learner:r.learner, total:0, count:0 };
+    byLearner[r.learner].total += r.pct; byLearner[r.learner].count++;
+  });
+  leaderboardCache = Object.values(byLearner)
+    .map(x=>({ ...x, avg: Math.round(x.total/x.count) }))
+    .sort((a,b)=> b.avg - a.avg);
+  go('leaderboard');
+}
+function leaderboardView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('leaderboard')}
+  <div class="card">
+    <h2>Leaderboard — Grade ${selectedGrade}</h2>
+    <p class="subtext">Ranked by average score across fully-marked assessments.</p>
+    ${leaderboardCache.length===0 ? '<p class="subtext">No fully-marked assessments for this grade yet.</p>' : `
+    <table class="resulttable">
+      <tr><th>Rank</th><th>Learner</th><th>Assessments</th><th>Average</th><th>Rating</th></tr>
+      ${leaderboardCache.map((x,i)=>`
+        <tr>
+          <td class="${i===0?'rank-1':''}">${i+1}</td>
+          <td>${x.learner}</td>
+          <td>${x.count}</td>
+          <td>${x.avg}%</td>
+          <td><span class="rating ${ratingClass(ratingFor(x.avg))}">${ratingFor(x.avg)}</span></td>
+        </tr>`).join('')}
+    </table>`}
+  </div>`;
+}
+
+/* ---------- teacher-facing leaderboard (can pick any grade, not tied to their own) ---------- */
+let teacherLbGrade = 1;
+async function openTeacherLeaderboard(grade){
+  teacherLbGrade = grade || teacherLbGrade;
+  const keys = await sList('examresult:');
+  const raw = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const enriched = await Promise.all(raw.map(enrichResult));
+  const filtered = enriched.filter(r=>r.fullyMarked && !r.untimed && String(r.examGrade)===String(teacherLbGrade));
+  const byLearner = {};
+  filtered.forEach(r=>{
+    if(!byLearner[r.learner]) byLearner[r.learner] = { learner:r.learner, total:0, count:0 };
+    byLearner[r.learner].total += r.pct; byLearner[r.learner].count++;
+  });
+  leaderboardCache = Object.values(byLearner)
+    .map(x=>({ ...x, avg: Math.round(x.total/x.count) }))
+    .sort((a,b)=> b.avg - a.avg);
+  go('teacherLeaderboard');
+}
+function teacherLeaderboardView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Leaderboard</h2>
+    <label>Grade</label>
+    <select onchange="openTeacherLeaderboard(Number(this.value))">${gradeOptions(teacherLbGrade)}</select>
+    <p class="subtext" style="margin-top:12px;">Ranked by average score across fully-marked assessments.</p>
+    ${leaderboardCache.length===0 ? '<p class="subtext">No fully-marked assessments for this grade yet.</p>' : `
+    <table class="resulttable">
+      <tr><th>Rank</th><th>Learner</th><th>Assessments</th><th>Average</th><th>Rating</th></tr>
+      ${leaderboardCache.map((x,i)=>`
+        <tr>
+          <td class="${i===0?'rank-1':''}">${i+1}</td>
+          <td>${x.learner}</td>
+          <td>${x.count}</td>
+          <td>${x.avg}%</td>
+          <td><span class="rating ${ratingClass(ratingFor(x.avg))}">${ratingFor(x.avg)}</span></td>
+        </tr>`).join('')}
+    </table>`}
+  </div>
+  <button class="btn-ghost" onclick="go('teacherDashboard')">Back to dashboard</button>`;
+}
+
+/* ================= CLASS NOTES (learner view) ================= */
+let classNotesCache = [];
+async function openClassNotes(){
+  const keys = await sList('note:');
+  const all = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  classNotesCache = all
+    .filter(n=> String(n.grade)===String(state.learner.grade) && (!n.school || sameSchool(n.school, state.learner.school)))
+    .sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+  go('classNotes');
+}
+function classNotesView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('notes')}
+  <div class="card">
+    <h2>Classroom notes — Grade ${state.learner.grade}</h2>
+    <p class="subtext">Notes your teachers have shared for your grade.</p>
+    ${classNotesCache.length===0 ? '<p class="subtext">No notes shared yet.</p>' : classNotesCache.map(n=>`
+      <div class="qbuilder-item">
+        <div class="qtop"><span>${n.topic} · by ${n.teacherName||'Teacher'}</span><span class="hint">${new Date(n.createdAt).toLocaleDateString()}</span></div>
+        <div style="font-weight:600;margin-bottom:6px;">${n.title}</div>
+        ${n.textContent ? `<div class="hint" style="white-space:pre-wrap;">${n.textContent}</div>` : ''}
+        ${filesListHTML(n.files||n.file)}
+      </div>`).join('')}
+  </div>`;
+}
+
+/* ================= HISTORY (questions done in previous exams) ================= */
+let historyCache = [];
+async function openHistory(){
+  const keys = await sList('examresult:');
+  const raw = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const lk = keyify(fullName(state.learner));
+  historyCache = raw.filter(r=>keyify(r.learner)===lk)
+    .sort((a,b)=> new Date(b.submittedAt) - new Date(a.submittedAt));
+  go('history');
+}
+function historyView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('')}
+  <div class="card">
+    <h2>History</h2>
+    <p class="subtext">Review the questions and answers from your past exams.</p>
+    ${historyCache.length===0 ? '<p class="subtext">No exams taken yet.</p>' : historyCache.map(r=>`
+      <div class="qbuilder-item">
+        <div class="qtop"><span>${r.examTitle||'Exam'}</span><span class="hint">${new Date(r.submittedAt).toLocaleDateString()}</span></div>
+        <button class="btn-ghost btn-sm" onclick="openAnswerReview('${r.code}')">View questions</button>
+      </div>`).join('')}
+  </div>`;
+}
+
+/* ================= MESSAGES ================= */
+function myIdentity(){
+  if(state.learner) return { usernameKey: keyify(state.learner.username), name: fullName(state.learner), role:'learner', grade: state.learner.grade, school: state.learner.school };
+  if(state.teacher) return { usernameKey: keyify(state.teacher.username), name: state.teacher.fullname, role:'teacher', grade: null, school: state.teacher.school };
+  return null;
+}
+let messagesGroups = [], messagesDMs = [];
+async function openMessages(){
+  const me = myIdentity();
+  const groupKeys = await sList('group:');
+  const allGroups = (await Promise.all(groupKeys.map(k=>sGet(k)))).filter(Boolean);
+  messagesGroups = me.role==='learner'
+    ? allGroups.filter(g => String(g.grade)===String(me.grade) && sameSchool(g.school, me.school))
+    : allGroups.filter(g => sameSchool(g.school, me.school));
+  const dmIdxKeys = await sList('dmindex:'+me.usernameKey+':');
+  const dmRefs = (await Promise.all(dmIdxKeys.map(k=>sGet(k)))).filter(Boolean);
+  messagesDMs = (await Promise.all(dmRefs.map(d=>sGet('dm:'+d.dmId)))).filter(Boolean);
+  go('messages');
+}
+function messagesView(){
+  const me = myIdentity();
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Messages</h2>
+    <h3 style="font-size:1rem;margin-bottom:8px;">Groups</h3>
+    ${messagesGroups.length===0 ? '<p class="hint">No groups yet.</p>' : messagesGroups.map(g=>`
+      <div class="qbuilder-item" style="cursor:pointer;" onclick="openChat('group:${g.id}','${g.name.replace(/'/g,"\\'")}')">
+        <div style="font-weight:600;">${g.name}</div><div class="hint">Grade ${g.grade} · ${g.school}</div>
+      </div>`).join('')}
+    ${me.role==='teacher' ? `<button class="btn-ghost btn-sm" onclick="go('newGroup')">+ New group</button>` : ''}
+
+    <h3 style="font-size:1rem;margin:18px 0 8px;">Direct messages</h3>
+    ${messagesDMs.length===0 ? '<p class="hint">No conversations yet.</p>' : messagesDMs.map(d=>{
+      const otherKey = d.participants.find(p=>p!==me.usernameKey);
+      const otherName = d.names[otherKey] || otherKey;
+      return `<div class="qbuilder-item" style="cursor:pointer;" onclick="openChat('dm:${d.id}','${otherName.replace(/'/g,"\\'")}')">
+        <div style="font-weight:600;">${otherName}</div>
+      </div>`;
+    }).join('')}
+    <button class="btn-ghost btn-sm" onclick="go('newMessage')">+ New message</button>
+  </div>
+  <button class="btn-ghost" onclick="go(state.learner?'learnerDashboard':'teacherDashboard')">Back to dashboard</button>`;
+}
+
+function newMessageView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>New message</h2>
+    <label>Username</label>
+    <input id="nm-username" placeholder="e.g. mwiz01">
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="startDM()">Start chat</button>
+    <button class="btn-ghost" onclick="go('messages')">Cancel</button>
+  </div>`;
+}
+async function startDM(presetUsername){
+  const uname = presetUsername || val('nm-username');
+  if(!uname){ setErr('Enter a username.'); return; }
+  const uk = keyify(uname);
+  const me = myIdentity();
+  if(uk===me.usernameKey){ setErr("That's your own username."); return; }
+  let targetName=null;
+  const l = await sGet('learner:'+uk); if(l) targetName = fullName(l);
+  if(!targetName){ const t = await sGet('teacher:'+uk); if(t) targetName = t.fullname; }
+  if(!targetName){ setErr('No user found with that username.'); return; }
+  const dmId = [me.usernameKey, uk].sort().join('_');
+  const convoKey = 'dm:'+dmId;
+  const existing = await sGet(convoKey);
+  if(!existing){
+    const names = {}; names[me.usernameKey]=me.name; names[uk]=targetName;
+    await sSet(convoKey, { id:dmId, participants:[me.usernameKey, uk], names, createdAt:new Date().toISOString() });
+    await sSet('dmindex:'+me.usernameKey+':'+dmId, { dmId });
+    await sSet('dmindex:'+uk+':'+dmId, { dmId });
+  }
+  openChat(convoKey, targetName);
+}
+
+function newGroupView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>New group</h2>
+    <label>Group name</label>
+    <input id="ng-name" placeholder="e.g. Grade 5 Class Chat">
+    <label>Grade</label>
+    <select id="ng-grade">${gradeOptions('1')}</select>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="createGroup()">Create group</button>
+    <button class="btn-ghost" onclick="go('messages')">Cancel</button>
+  </div>`;
+}
+async function createGroup(){
+  const name = val('ng-name'), grade = val('ng-grade');
+  if(!name){ setErr('Give the group a name.'); return; }
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  const g = { id, name, grade, school: state.teacher.school||'', teacherUsername: state.teacher.username, teacherName: state.teacher.fullname, createdAt: new Date().toISOString() };
+  await sSet('group:'+id, g);
+  toast('Group created', 'good');
+  openChat('group:'+id, name);
+}
+
+let chatMessages = [];
+let chatUnsubscribe = null;
+function stopChatListener(){
+  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+}
+function chatMessagesHTML(){
+  const me = myIdentity();
+  if(chatMessages.length===0) return '<p class="subtext">No messages yet — say hello.</p>';
+  return chatMessages.map(m=>`
+    <div style="margin-bottom:10px; ${m.senderUsername===me.usernameKey?'text-align:right;':''}">
+      <div class="hint" style="margin-bottom:2px;">${m.senderName} · ${new Date(m.sentAt).toLocaleString()}</div>
+      <div style="display:inline-block; background:${m.senderUsername===me.usernameKey?'var(--gold)':'var(--surface2)'}; color:${m.senderUsername===me.usernameKey?'var(--on-accent)':'var(--sand)'}; padding:8px 12px; border-radius:10px; max-width:80%; text-align:left;">${m.text}</div>
+    </div>`).join('');
+}
+function renderChatMessagesList(){
+  const el = document.getElementById('chat-messages-list');
+  if(!el) return; // no longer on the chat screen — listener will be stopped by go()
+  el.innerHTML = chatMessagesHTML();
+  el.scrollTop = el.scrollHeight;
+}
+function openChat(convoKey, title){
+  stopChatListener();
+  chatMessages = [];
+  go('chat', { activeConvoKey: convoKey, activeConvoTitle: title });
+  markChatRead(convoKey).then(refreshUnreadCounts);
+  if(!db) return;
+  const prefix = 'msg:'+convoKey+':';
+  chatUnsubscribe = db.collection('appdata')
+    .where(firebase.firestore.FieldPath.documentId(), '>=', prefix)
+    .where(firebase.firestore.FieldPath.documentId(), '<', prefix + '\uf8ff')
+    .onSnapshot(
+      (snap) => {
+        chatMessages = snap.docs.map(d => d.data().value).filter(Boolean)
+          .sort((a,b) => new Date(a.sentAt) - new Date(b.sentAt));
+        renderChatMessagesList();
+      },
+      (err) => console.error('chat listener failed', err)
+    );
+}
+function chatView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>${state.activeConvoTitle} <span class="hint" style="font-weight:400;">· live</span></h2>
+    <div id="chat-messages-list" style="max-height:50vh; overflow-y:auto; margin-bottom:14px;">${chatMessagesHTML()}</div>
+    <textarea id="chat-input" placeholder="Type a message..." style="min-height:50px;"></textarea>
+    <button class="btn-primary" onclick="sendChatMessage()">Send</button>
+  </div>
+  <button class="btn-ghost" onclick="go('messages')">Back to messages</button>`;
+}
+async function sendChatMessage(){
+  const input = document.getElementById('chat-input');
+  const text = input ? input.value.trim() : '';
+  if(!text) return;
+  const me = myIdentity();
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  if(input) input.value = '';
+  await sSet('msg:'+state.activeConvoKey+':'+id, { senderUsername: me.usernameKey, senderName: me.name, senderRole: me.role, text, sentAt: new Date().toISOString() });
+}
+
+/* ================= CLASSROOM (classmates + teachers directory) ================= */
+let classroomClassmates = [], classroomTeachers = [];
+function sameSchool(a,b){ return (a||'').trim().toLowerCase() === (b||'').trim().toLowerCase(); }
+async function openClassroom(){
+  const learnerKeys = await sList('learner:');
+  const allLearners = (await Promise.all(learnerKeys.map(k=>sGet(k)))).filter(Boolean);
+  classroomClassmates = allLearners.filter(l =>
+    String(l.grade)===String(state.learner.grade) &&
+    sameSchool(l.school, state.learner.school) &&
+    l.username !== state.learner.username
+  );
+  const teacherKeys = await sList('teacher:');
+  const allTeachers = (await Promise.all(teacherKeys.map(k=>sGet(k)))).filter(Boolean);
+  classroomTeachers = allTeachers.filter(t => sameSchool(t.school, state.learner.school));
+  go('classroom');
+}
+function classroomView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('')}
+  <div class="card">
+    <h2>Classroom</h2>
+    <p class="subtext">${state.learner.school} · Grade ${state.learner.grade}</p>
+    <h3 style="font-size:1rem;margin-bottom:8px;">Teachers</h3>
+    ${classroomTeachers.length===0 ? '<p class="hint">No teachers found for your school yet.</p>' : classroomTeachers.map(t=>`
+      <div class="qbuilder-item" style="display:flex;align-items:center;gap:10px;">
+        ${avatarHTML(t.fullname, null, 34)}
+        <div style="flex:1;"><div style="font-weight:600;">${t.fullname}</div><div class="hint">@${t.username}</div></div>
+        <button class="btn-ghost btn-sm" onclick="startDM('${t.username}')">Message</button></div>`).join('')}
+    <h3 style="font-size:1rem;margin:18px 0 8px;">Classmates</h3>
+    ${classroomClassmates.length===0 ? '<p class="hint">No classmates found yet for your grade and school.</p>' : classroomClassmates.map(l=>`
+      <div class="qbuilder-item" style="display:flex;align-items:center;gap:10px;">
+        ${avatarHTML(fullName(l), l.photo, 34)}
+        <div style="flex:1;"><div style="font-weight:600;">${fullName(l)}</div><div class="hint">@${l.username}</div></div>
+        <button class="btn-ghost btn-sm" onclick="startDM('${l.username}')">Message</button></div>`).join('')}
+  </div>`;
+}
+
+/* ================= ACCOUNT INFO (learner details) ================= */
+/* ---------- streaks (effort tracking) ---------- */
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function streakBadge(streak){
+  if(streak>=30) return { name:'Apex Scorpion', icon:'🦂' };
+  if(streak>=14) return { name:'Stinger', icon:'🦂' };
+  if(streak>=7) return { name:'Hunter', icon:'🦂' };
+  if(streak>=3) return { name:'Scorpling', icon:'🦂' };
+  return null;
+}
+async function recordActivity(){
+  if(!state.learner) return;
+  const today = todayStr();
+  const learner = state.learner;
+  if(learner.lastActiveDate === today) return; // already counted today
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  learner.currentStreak = (learner.lastActiveDate===yesterday) ? (learner.currentStreak||0)+1 : 1;
+  learner.longestStreak = Math.max(learner.longestStreak||0, learner.currentStreak);
+  learner.lastActiveDate = today;
+  await sSet('learner:'+keyify(learner.username), learner);
+}
+function streakCardHTML(){
+  const l = state.learner;
+  const streak = l.currentStreak||0;
+  const badge = streakBadge(streak);
+  if(streak===0) return `<div class="card"><h2>Streak</h2><p class="subtext">Do an exam, homework, or practice round today to start your streak.</p></div>`;
+  return `<div class="card score-hero">
+    <div class="eyebrow">Streak</div>
+    <div class="big">🔥 ${streak}</div>
+    <div class="msg">day${streak===1?'':'s'} in a row${badge?' · '+badge.icon+' '+badge.name:''}</div>
+    ${l.longestStreak>streak ? `<div class="hint" style="margin-top:6px;">Best ever: ${l.longestStreak} days</div>` : ''}
+  </div>`;
+}
+
+function accountInfoView(){
+  const l = state.learner;
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('')}
+  <div class="card">
+    <h2>Account information</h2>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+      ${avatarHTML(fullName(l), l.photo, 64)}
+      <div>
+        <input type="file" accept="image/*" onchange="attachProfilePhoto(this)">
+        <div id="photo-status" class="hint">${l.photo ? 'Photo attached — save to keep it.' : 'No photo yet.'}</div>
+      </div>
+    </div>
+    <label>Name</label><input value="${fullName(l)}" disabled>
+    <label>Username</label><input value="${l.username}" disabled>
+    <label>School</label><input value="${l.school||''}" disabled>
+    <label>Grade</label><input value="Grade ${l.grade}" disabled>
+    <p class="hint">These are set at signup and can't be changed here — reach out to your teacher if something needs correcting.</p>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="saveAccountInfo()">Save photo</button>
+  </div>
+  ${streakCardHTML()}`;
+}
+let pendingProfilePhoto = undefined;
+async function attachProfilePhoto(inputEl){
+  const files = await pickFiles(inputEl);
+  if(files.length===0) return;
+  pendingProfilePhoto = files[0];
+  document.getElementById('photo-status').textContent = 'Attached: '+pendingProfilePhoto.name+' — save to keep it.';
+  toast('Photo attached', 'good');
+}
+async function saveAccountInfo(){
+  if(pendingProfilePhoto !== undefined) state.learner.photo = pendingProfilePhoto;
+  await sSet('learner:'+keyify(state.learner.username), state.learner);
+  pendingProfilePhoto = undefined;
+  toast('Photo updated', 'good');
+  render();
+}
+
+/* ================= SETTINGS (learner) ================= */
+function applyTheme(theme){
+  document.body.classList.toggle('theme-dark', theme==='dark');
+}
+async function toggleTheme(isDark){
+  const theme = isDark ? 'dark' : 'cream';
+  applyTheme(theme);
+  if(state.learner){
+    state.learner.theme = theme;
+    await sSet('learner:'+keyify(state.learner.username), state.learner);
+  }
+}
+let settingsOpenSection = null;
+function toggleSettingsSection(section){
+  settingsOpenSection = (settingsOpenSection===section) ? null : section;
+  render();
+}
+function learnerSettingsView(){
+  const isDark = state.learner.theme === 'dark';
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('')}
+  <div class="card">
+    <h2>Settings</h2>
+    <div class="settings-row" onclick="toggleSettingsSection('appearance')">
+      <span>Appearance</span><span class="hint">${settingsOpenSection==='appearance'?'▲':'▼'}</span>
+    </div>
+    ${settingsOpenSection==='appearance' ? `
+    <div class="checkline">
+      <input type="checkbox" id="settings-theme" ${isDark?'checked':''} onchange="toggleTheme(this.checked)">
+      <label style="margin:0;">Dark theme (unchecked = cream)</label>
+    </div>` : ''}
+
+    <div class="settings-row" onclick="toggleSettingsSection('password')">
+      <span>Change password</span><span class="hint">${settingsOpenSection==='password'?'▲':'▼'}</span>
+    </div>
+    ${settingsOpenSection==='password' ? `
+    <label>Current password</label>
+    <div class="pw-wrap"><input id="cp-old" type="password"><button type="button" class="pw-toggle" onclick="togglePw('cp-old',this)">Show</button></div>
+    <label>New password</label>
+    <div class="pw-wrap"><input id="cp-new" type="password" placeholder="At least 4 chars, letters + numbers"><button type="button" class="pw-toggle" onclick="togglePw('cp-new',this)">Show</button></div>
+    <label>Confirm new password</label>
+    <div class="pw-wrap"><input id="cp-new2" type="password"><button type="button" class="pw-toggle" onclick="togglePw('cp-new2',this)">Show</button></div>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="changeLearnerPassword()">Update password</button>` : ''}
+  </div>
+  <button class="btn-ghost" style="color:var(--sting);" onclick="applyTheme('cream');selectedGrade=null;viewHistory=[];settingsOpenSection=null;go('home',{learner:null})">Log out</button>`;
+}
+async function changeLearnerPassword(){
+  const oldPass=val('cp-old'), newPass=val('cp-new'), newPass2=val('cp-new2');
+  if(!oldPass||!newPass||!newPass2){ setErr('Fill in all three fields.'); return; }
+  if(oldPass !== state.learner.password){ setErr('Current password is incorrect.'); return; }
+  if(!validPassword(newPass)){ setErr('New password must be at least 4 characters with a mix of letters and numbers.'); return; }
+  if(newPass !== newPass2){ setErr('New passwords do not match.'); return; }
+  state.learner.password = newPass;
+  await sSet('learner:'+keyify(state.learner.username), state.learner);
+  toast('Password updated', 'good');
+  state.err = '';
+  render();
+}
+
+/* ================= NOTIFICATIONS ================= */
+let notificationsCache = [];
+async function createNotification(notif){
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  await sSet('notif:'+id, { id, createdAt: new Date().toISOString(), ...notif });
+}
+async function openNotifications(){
+  const keys = await sList('notif:');
+  const all = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const lk = keyify(fullName(state.learner));
+  notificationsCache = all.filter(n=>{
+    if(n.type==='marks') return n.learnerKey===lk;
+    return String(n.grade)===String(state.learner.grade) && sameSchool(n.school, state.learner.school);
+  }).sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt)).slice(0,30);
+  state.learner.lastNotifSeenAt = new Date().toISOString();
+  await sSet('learner:'+keyify(state.learner.username), state.learner);
+  unreadNotifCount = 0;
+  go('notifications');
+  updateBadgeDOM();
+}
+function notificationsView(){
+  return `
+  ${brandHTML()}
+  ${menuBarHTML('')}
+  <div class="card">
+    <h2>Notifications</h2>
+    ${notificationsCache.length===0 ? '<p class="subtext">Nothing yet.</p>' : notificationsCache.map(n=>`
+      <div class="qbuilder-item">
+        <div class="qtop"><span>${new Date(n.createdAt).toLocaleString()}</span></div>
+        <div>${n.message}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+/* ================= TEACHER AUTH ================= */
+let teacherAuthMode = 'login';
+function teacherAuthView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <div class="toggle-row">
+      <button class="${teacherAuthMode==='login'?'active':''}" onclick="teacherAuthMode='login';render()">Log in</button>
+      <button class="${teacherAuthMode==='signup'?'active':''}" onclick="teacherAuthMode='signup';render()">Sign up</button>
+    </div>
+    ${teacherAuthMode==='login' ? teacherLoginForm() : teacherSignupForm()}
+    <div class="err">${state.err}</div>
+  </div>`;
+}
+function teacherLoginForm(){
+  return `
+  <h2 style="margin-top:10px;">Teacher login</h2>
+  <label>Username</label><input id="tl-user">
+  <label>Password</label><div class="pw-wrap"><input id="tl-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('tl-pass',this)">Show</button></div>
+  <button class="btn-primary" onclick="teacherLogin()">Log in</button>`;
+}
+function teacherSignupForm(){
+  return `
+  <h2 style="margin-top:10px;">Create a teacher profile</h2>
+  <label>Full name</label><input id="ts-name">
+  <label>Username</label><input id="ts-user">
+  <label>School</label><input id="ts-school" placeholder="e.g. Green Valley Primary">
+  <label>Password</label><div class="pw-wrap"><input id="ts-pass" type="password"><button type="button" class="pw-toggle" onclick="togglePw('ts-pass',this)">Show</button></div>
+  <button class="btn-primary" onclick="teacherSignup()">Sign up</button>`;
+}
+async function teacherSignup(){
+  const fullname=val('ts-name'), username=val('ts-user'), school=val('ts-school'), password=val('ts-pass');
+  if(!fullname||!username||!school||!password){ setErr('Please fill in every field.'); return; }
+  const k = keyify(username);
+  const existing = await sGet('teacher:'+k);
+  if(existing){ setErr('That username is taken.'); return; }
+  const teacher = { fullname, username, school, password };
+  await sSet('teacher:'+k, teacher);
+  toast('Teacher profile created', 'good');
+  go('teacherDashboard', { teacher });
+}
+async function teacherLogin(){
+  const username=val('tl-user'), password=val('tl-pass');
+  const k = keyify(username);
+  const teacher = await sGet('teacher:'+k);
+  if(!teacher || teacher.password !== password){ setErr('Username or password is incorrect.'); return; }
+  go('teacherDashboard', { teacher });
+}
+
+/* ================= TEACHER DASHBOARD ================= */
+let teacherExamsCache = [];
+async function loadTeacherExams(){
+  const keys = await sList('exam:');
+  const all = await Promise.all(keys.map(k=>sGet(k)));
+  teacherExamsCache = all.filter(e=>e && e.teacherUsername===state.teacher.username)
+    .sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0));
+}
+function examStatus(exam){
+  if(exam.untimed){
+    const overdue = exam.dueAt && Date.now() > new Date(exam.dueAt).getTime();
+    return overdue ? {label:'Overdue', cls:'badge-closed'} : {label:'Homework', cls:'badge-upcoming'};
+  }
+  const now = Date.now(), openAt = new Date(exam.openAt).getTime(), closeAt = openAt+exam.durationMinutes*60000;
+  if(now<openAt) return {label:'Upcoming', cls:'badge-upcoming'};
+  if(now>closeAt) return {label:'Closed', cls:'badge-closed'};
+  return {label:'Live', cls:'badge-live'};
+}
+function teacherDashboardView(){
+  return `
+  ${brandHTML()}
+  <div class="who">Logged in as <b>${state.teacher.fullname}</b>
+    <button class="logout" onclick="go('home',{teacher:null})">Log out</button>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <h2>Your exams</h2>
+    <div id="exam-list" class="center"><span class="spinner"></span></div>
+    <button class="btn-primary" onclick="go('examBuilder',{examDraft:newDraft()})">+ New exam</button>
+    <button class="btn-ghost" onclick="go('examBuilder',{examDraft:{...newDraft(), untimed:true}})">+ New homework</button>
+    <button class="btn-ghost" onclick="openTeacherLeaderboard()">View leaderboard</button>
+    <button class="btn-ghost" onclick="openMessages()">✉️ Messages</button>
+  </div>
+  <div class="card">
+    <h2>Classroom notes</h2>
+    <div id="note-list" class="center"><span class="spinner"></span></div>
+    <button class="btn-primary" onclick="go('noteBuilder',{noteDraft:newNoteDraft()})">+ Upload note</button>
+  </div>
+  <div class="card">
+    <h2>Class management</h2>
+    <button class="btn-ghost" onclick="openQuestionBank()">📚 Question bank</button>
+    <button class="btn-ghost" onclick="go('bulkRoster')">👥 Bulk add learners</button>
+  </div>`;
+}
+function newDraft(){ return { title:'', grade:'1', topic:TOPICS[0], untimed:false, openAt:'', durationMinutes:30, dueAt:'', instructions:'', questions:[], paperFiles:[], allowPaperAnswerUpload:false, paperMaxMarks:100 }; }
+function newNoteDraft(){ return { title:'', grade:'1', topic:TOPICS[0], textContent:'', files:[] }; }
+
+let teacherNotesCache = [];
+async function loadTeacherNotes(){
+  const keys = await sList('note:');
+  const all = await Promise.all(keys.map(k=>sGet(k)));
+  teacherNotesCache = all.filter(n=> n && n.teacherUsername===state.teacher.username)
+    .sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+}
+async function renderNoteList(){
+  await loadTeacherNotes();
+  const el = document.getElementById('note-list');
+  if(!el) return;
+  if(teacherNotesCache.length===0){ el.innerHTML = '<p class="subtext">No notes uploaded yet.</p>'; return; }
+  el.innerHTML = teacherNotesCache.map(n=>`
+    <div class="exam-item">
+      <div class="row">
+        <div>
+          <div style="font-weight:600;">${n.title}</div>
+          <div class="subtext" style="margin:2px 0 0;">Grade ${n.grade} · ${n.topic}${asFileArray(n.files||n.file).length?' · has file':''}</div>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="deleteNote('${n.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+  if(window.renderMathInElement){ try{ renderMathInElement(el, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); }catch(e){} }
+}
+async function deleteNote(id){
+  if(!db) return;
+  try{ await db.collection('appdata').doc('note:'+id).delete(); toast('Note deleted', 'good'); renderNoteList(); }
+  catch(e){ toast('Could not delete note.', 'bad'); }
+}
+
+async function addExamTime(code){
+  const mins = prompt('Add how many extra minutes to this exam?');
+  if(!mins) return;
+  const n = Number(mins);
+  if(!n || n<=0){ toast('Enter a valid number of minutes.', 'bad'); return; }
+  const exam = await sGet('exam:'+code);
+  if(!exam){ toast('Exam not found.', 'bad'); return; }
+  exam.durationMinutes += n;
+  await sSet('exam:'+code, exam);
+  toast('Added '+n+' minutes to "'+exam.title+'"', 'good');
+  renderExamList();
+}
+async function renderExamList(){
+  await loadTeacherExams();
+  const el = document.getElementById('exam-list');
+  if(!el) return;
+  if(teacherExamsCache.length===0){ el.innerHTML = '<p class="subtext">No exams yet — create your first one below.</p>'; }
+  else{
+    el.innerHTML = teacherExamsCache.map(exam=>{
+      const s = examStatus(exam);
+      return `<div class="exam-item">
+        <div class="row">
+          <div>
+            <div style="font-weight:600;">${exam.untimed?'🏠 ':'⏱ '}${exam.title}</div>
+            <div class="subtext" style="margin:2px 0 0;">Grade ${exam.grade} · ${exam.topic} · ${exam.questions.length} question(s)${hasPaper(exam)?' · has paper file':''}${exam.untimed?' · due '+new Date(exam.dueAt).toLocaleString():''}</div>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge ${s.cls}">${s.label}</span><br>
+            ${exam.untimed ? '' : `<span class="code mono">${exam.code}</span>`}
+          </div>
+        </div>
+        <div class="exam-actions">
+          ${exam.untimed ? '' : `
+          <button class="btn-ghost btn-sm" onclick="addExamTime('${exam.code}')">+ Add time</button>
+          <button class="btn-ghost btn-sm" onclick="reopenExam('${exam.code}')">Reopen</button>
+          `}
+          <button class="btn-ghost btn-sm" onclick="openExamEdit('${exam.code}')">Edit ${exam.untimed?'due date':'dates'}</button>
+          <button class="btn-ghost btn-sm" onclick="openMarking('${exam.code}')">Mark submissions</button>
+          <button class="btn-ghost btn-sm" onclick="openExamAnalytics('${exam.code}')">Analytics</button>
+          <button class="btn-ghost btn-sm" onclick="downloadExamPdf('${exam.code}')">Download PDF</button>
+          <button class="btn-ghost btn-sm" onclick="downloadExamCsv('${exam.code}')">Export CSV</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if(window.renderMathInElement){ try{ renderMathInElement(el, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); }catch(e){} }
+}
+
+async function reopenExam(code){
+  const mins = prompt('Reopen this exam starting now — for how many minutes?');
+  if(!mins) return;
+  const n = Number(mins);
+  if(!n || n<=0){ toast('Enter a valid number of minutes.', 'bad'); return; }
+  const exam = await sGet('exam:'+code);
+  if(!exam){ toast('Exam not found.', 'bad'); return; }
+  exam.openAt = new Date().toISOString();
+  exam.durationMinutes = n;
+  await sSet('exam:'+code, exam);
+  toast('"'+exam.title+'" reopened for '+n+' minutes', 'good');
+  renderExamList();
+}
+
+/* ================= EDIT EXAM (dates + instructions) ================= */
+async function openExamEdit(code){
+  const exam = await sGet('exam:'+code);
+  if(!exam){ toast('Exam not found.', 'bad'); return; }
+  go('examEdit', { activeExam: exam });
+}
+function examEditView(){
+  const exam = state.activeExam;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Edit "${exam.title}"</h2>
+    ${exam.untimed ? `
+    <label>Due date</label>
+    <input id="ee-due" type="datetime-local" value="${exam.dueAt||''}">
+    ` : `
+    <label>Opens at</label>
+    <input id="ee-open" type="datetime-local" value="${exam.openAt}">
+    <label>Duration (min)</label>
+    <input id="ee-duration" type="number" value="${exam.durationMinutes}">
+    `}
+    <label>Instructions for learners</label>
+    <textarea id="ee-instructions">${exam.instructions||''}</textarea>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="saveExamEdit('${exam.code}')">Save changes</button>
+    <button class="btn-ghost" onclick="go('teacherDashboard')">Cancel</button>
+  </div>`;
+}
+async function saveExamEdit(code){
+  const exam = await sGet('exam:'+code);
+  if(!exam){ toast('Exam not found.', 'bad'); return; }
+  if(exam.untimed){
+    const dueAt = val('ee-due');
+    if(!dueAt){ setErr('Set a due date.'); return; }
+    exam.dueAt = dueAt;
+  } else {
+    const openAt = val('ee-open'), duration = Number(val('ee-duration'));
+    if(!openAt){ setErr('Set an opening date and time.'); return; }
+    if(!duration || duration<=0){ setErr('Enter a valid duration.'); return; }
+    exam.openAt = openAt;
+    exam.durationMinutes = duration;
+  }
+  exam.instructions = val('ee-instructions');
+  await sSet('exam:'+code, exam);
+  toast((exam.untimed?'Homework':'Exam')+' updated', 'good');
+  go('teacherDashboard');
+}
+
+/* ================= EXAM BUILDER ================= */
+function examBuilderView(){
+  const d = state.examDraft;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>New ${d.untimed?'assignment':'exam'}</h2>
+    <div class="toggle-row">
+      <button class="${!d.untimed?'active':''}" onclick="setDraftUntimed(false)">Timed exam</button>
+      <button class="${d.untimed?'active':''}" onclick="setDraftUntimed(true)">Untimed homework</button>
+    </div>
+    <p class="hint" style="margin-bottom:10px;">${d.untimed ? 'No countdown — learners can do this anytime before the due date. No code needed; it appears automatically for their grade.' : 'Opens and closes at set times, entered with a code.'}</p>
+    <label>Title</label><input id="eb-title" value="${d.title}">
+    <div class="row3">
+      <div><label>Grade</label><select id="eb-grade">${gradeOptions(d.grade)}</select></div>
+      <div><label>Topic</label><select id="eb-topic">${TOPICS.map(t=>`<option ${d.topic===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      ${d.untimed ? '' : `<div><label>Duration (min)</label><input id="eb-duration" type="number" value="${d.durationMinutes}"></div>`}
+    </div>
+    ${d.untimed ? `
+    <label>Due date</label>
+    <input id="eb-due" type="datetime-local" value="${d.dueAt}">
+    ` : `
+    <label>Opens at</label>
+    <input id="eb-open" type="datetime-local" value="${d.openAt}">
+    `}
+
+    <label>Instructions for learners (optional)</label>
+    <textarea id="eb-instructions" placeholder="e.g. Show all working, calculators allowed, submit before time runs out...">${d.instructions||''}</textarea>
+
+    <label style="margin-top:20px;">Optional: attach a question paper — one or more files (PDF or image)</label>
+    <input type="file" multiple onchange="attachPaperFile(this)">
+    <div id="paper-file-name" class="hint">${asFileArray(d.paperFiles||d.paperFile).length ? 'Attached: '+asFileArray(d.paperFiles||d.paperFile).map(f=>f.name).join(', ') : 'No file attached.'}</div>
+    <div class="checkline">
+      <input type="checkbox" id="eb-allow-upload" ${d.allowPaperAnswerUpload?'checked':''}>
+      <label style="margin:0;">Allow learners to upload back answer file(s) for this paper</label>
+    </div>
+    <label>Paper max marks (used for percentage/rating if a paper is attached)</label>
+    <input id="eb-paper-max" type="number" value="${d.paperMaxMarks}">
+  </div>
+
+  <div class="card">
+    <h2>Questions (${d.questions.length})</h2>
+    <p class="hint">Use $...$ for math, e.g. $\\frac{3}{4}$, $x^2+1$, $\\int_0^1 x\\,dx$.</p>
+    ${d.questions.map((q,i)=>`
+      <div class="qbuilder-item">
+        <div class="qtop"><span>${questionHeading(q,i)} <span class="type-tag type-${q.type}">${typeLabel(q.type)}</span>${q.image?' 🖼':''}</span><button class="remove-x" onclick="removeQuestion(${i})">remove</button></div>
+        <div>${q.text}</div>
+      </div>`).join('')}
+    <button class="btn-ghost btn-sm" onclick="toggleBankPicker()">📚 Insert from question bank</button>
+    <div id="bank-picker" style="${bankPickerOpen?'':'display:none;'} margin-top:10px;">${bankPickerHTML()}</div>
+    <div style="margin-top:14px;">
+      <label>Question type</label>
+      <select id="qb-type" onchange="toggleQType()">
+        <option value="mcq">Multiple choice (auto-marked)</option>
+        <option value="short">Short answer (auto-marked)</option>
+        <option value="upload">File upload answer (hand-marked)</option>
+        <option value="text">Written explanation (hand-marked)</option>
+      </select>
+      <label>Question text</label><textarea id="qb-text" placeholder="e.g. Simplify 3/4 + 1/2" oninput="updateLivePreview(this.value,'qb-text-preview')"></textarea>
+      <div id="qb-text-preview" class="hint" style="min-height:1.2em;"></div>
+      <p class="hint" style="margin-top:-6px;">Type naturally — 1/2 becomes a fraction, 2^2 becomes an exponent, sqrt(4) becomes a root. (LaTeX like $\\frac{3}{4}$ also still works.)</p>
+      <label>Attach an image to this question (optional — e.g. a diagram to refer to)</label>
+      <input type="file" accept="image/*" onchange="attachQuestionImage(this)">
+      <div id="qb-image-name" class="hint">${qbPendingImage ? 'Attached: '+qbPendingImage.name : 'No image attached.'}</div>
+      <div id="qb-mcq-fields">
+        <div class="row2">
+          <div><label>Option A</label><input id="qb-a"></div>
+          <div><label>Option B</label><input id="qb-b"></div>
+        </div>
+        <div class="row2">
+          <div><label>Option C</label><input id="qb-c"></div>
+          <div><label>Option D</label><input id="qb-d"></div>
+        </div>
+        <label>Correct option</label>
+        <select id="qb-correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+      </div>
+      <div id="qb-shortanswer-field" style="display:none;">
+        <label>Accepted answer(s) — comma separated, e.g. 1/2, 0.5</label>
+        <input id="qb-shortanswers" placeholder="1/2, 0.5">
+        <p class="hint">Learners see instant right/wrong, same as multiple choice — no marking needed from you.</p>
+      </div>
+      <div id="qb-points-field" style="display:none;">
+        <label>Points this question is worth</label>
+        <input id="qb-points" type="number" value="1" min="1">
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="qb-multipart" onchange="toggleMultipartFields()">
+        <label style="margin:0;">This is one part of a multi-part question (a, b, c...)</label>
+      </div>
+      <div id="qb-multipart-fields" style="display:none;">
+        <div class="row2">
+          <div><label>Shared question label</label><input id="qb-grouplabel" placeholder="e.g. Question 5"></div>
+          <div><label>Part</label><input id="qb-partlabel" placeholder="e.g. a"></div>
+        </div>
+        <p class="hint">Give every part the same label (e.g. "Question 5") and its own letter — they'll show together as Question 5 (a), Question 5 (b)...</p>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="qb-savebank">
+        <label style="margin:0;">Also save this question to my question bank for reuse</label>
+      </div>
+      <button class="btn-ghost" onclick="addQuestion()">+ Add question</button>
+    </div>
+  </div>
+  <div class="err">${state.err}</div>
+  <button class="btn-primary" onclick="saveExam()">Save exam &amp; generate code</button>
+  <button class="btn-ghost" onclick="go('teacherDashboard')">Cancel</button>`;
+}
+
+function toggleQType(){
+  const t = val('qb-type');
+  document.getElementById('qb-mcq-fields').style.display = (t==='mcq') ? '' : 'none';
+  document.getElementById('qb-shortanswer-field').style.display = (t==='short') ? '' : 'none';
+  document.getElementById('qb-points-field').style.display = (t==='text'||t==='upload') ? '' : 'none';
+}
+function toggleMultipartFields(){
+  const cb = document.getElementById('qb-multipart');
+  document.getElementById('qb-multipart-fields').style.display = cb.checked ? '' : 'none';
+}
+
+async function attachPaperFile(inputEl){
+  const newFiles = await pickFiles(inputEl);
+  if(newFiles.length===0) return;
+  if(!Array.isArray(state.examDraft.paperFiles)) state.examDraft.paperFiles = asFileArray(state.examDraft.paperFile);
+  state.examDraft.paperFiles.push(...newFiles);
+  state.examDraft.paperFile = null;
+  document.getElementById('paper-file-name').textContent = 'Attached: '+state.examDraft.paperFiles.map(f=>f.name).join(', ');
+  toast(newFiles.length>1 ? newFiles.length+' files attached' : 'File attached', 'good');
+}
+
+function syncDraft(){
+  const d = state.examDraft;
+  d.title = val('eb-title'); d.grade = val('eb-grade'); d.topic = val('eb-topic');
+  const durEl = document.getElementById('eb-duration');
+  if(durEl) d.durationMinutes = Number(durEl.value) || 30;
+  const openEl = document.getElementById('eb-open');
+  if(openEl) d.openAt = openEl.value;
+  const dueEl = document.getElementById('eb-due');
+  if(dueEl) d.dueAt = dueEl.value;
+  const ins = document.getElementById('eb-instructions');
+  if(ins) d.instructions = ins.value.trim();
+  const cb = document.getElementById('eb-allow-upload');
+  if(cb) d.allowPaperAnswerUpload = cb.checked;
+  const pm = document.getElementById('eb-paper-max');
+  if(pm) d.paperMaxMarks = Number(pm.value) || 0;
+}
+function setDraftUntimed(untimed){
+  syncDraft();
+  state.examDraft.untimed = untimed;
+  render();
+}
+let qbPendingImage = null;
+async function attachQuestionImage(inputEl){
+  const files = await pickFiles(inputEl);
+  if(files.length===0) return;
+  qbPendingImage = files[0];
+  document.getElementById('qb-image-name').textContent = 'Attached: '+qbPendingImage.name;
+  toast('Image attached', 'good');
+}
+async function addQuestion(){
+  syncDraft();
+  const type = val('qb-type');
+  const text = autoMathify(val('qb-text'));
+  if(!text){ setErr('Write the question text.'); render(); return; }
+  let q;
+  if(type==='mcq'){
+    const a=val('qb-a'), b=val('qb-b'), c=val('qb-c'), d2=val('qb-d'), correct=Number(val('qb-correct'));
+    if(!a||!b||!c||!d2){ setErr('Fill in all four options.'); render(); return; }
+    q = { id: Date.now()+Math.random(), type, text, options:[a,b,c,d2], correctIndex: correct, image: qbPendingImage||null };
+  } else if(type==='short'){
+    const acceptedAnswers = val('qb-shortanswers').split(',').map(s=>s.trim()).filter(Boolean);
+    if(acceptedAnswers.length===0){ setErr('Give at least one accepted answer.'); render(); return; }
+    q = { id: Date.now()+Math.random(), type, text, acceptedAnswers, image: qbPendingImage||null };
+  } else {
+    const points = Number(val('qb-points')) || 1;
+    q = { id: Date.now()+Math.random(), type, text, points, image: qbPendingImage||null };
+  }
+  state.examDraft.questions.push(q);
+  const mpCb = document.getElementById('qb-multipart');
+  if(mpCb && mpCb.checked){
+    const groupLabel = val('qb-grouplabel'), partLabel = val('qb-partlabel');
+    if(groupLabel && partLabel){ q.groupLabel = groupLabel; q.partLabel = partLabel; }
+  }
+  if(document.getElementById('qb-savebank') && document.getElementById('qb-savebank').checked){
+    const bankId = Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    await sSet('qbank:'+bankId, { ...q, id:bankId, grade: state.examDraft.grade, topic: state.examDraft.topic,
+      teacherUsername: state.teacher.username, createdAt: new Date().toISOString() });
+    toast('Question added and saved to bank', 'good');
+  }
+  qbPendingImage = null;
+  state.err='';
+  render();
+}
+function removeQuestion(i){ syncDraft(); state.examDraft.questions.splice(i,1); render(); }
+
+/* ---------- question bank picker (inside exam builder) ---------- */
+let bankPickerOpen = false, bankPickerCache = [];
+async function toggleBankPicker(){
+  bankPickerOpen = !bankPickerOpen;
+  if(bankPickerOpen){
+    const keys = await sList('qbank:');
+    const all = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+    bankPickerCache = all.filter(q=>q.teacherUsername===state.teacher.username)
+      .sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  }
+  render();
+}
+function bankPickerHTML(){
+  if(!bankPickerOpen) return '';
+  if(bankPickerCache.length===0) return '<p class="hint">No saved questions yet — tick "save to bank" when adding a question.</p>';
+  return bankPickerCache.map((q,i)=>`
+    <div class="qbuilder-item">
+      <div class="qtop"><span>${q.grade?'Grade '+q.grade+' · ':''}${q.topic||''} <span class="type-tag type-${q.type}">${typeLabel(q.type)}</span>${q.image?' 🖼':''}</span>
+        <button class="btn-ghost btn-sm" onclick="insertFromBank(${i})">+ Add</button></div>
+      <div>${q.text}</div>
+    </div>`).join('');
+}
+function insertFromBank(i){
+  const src = bankPickerCache[i];
+  const copy = { ...src, id: Date.now()+Math.random() };
+  delete copy.teacherUsername; delete copy.createdAt; delete copy.grade; delete copy.topic;
+  state.examDraft.questions.push(copy);
+  toast('Question added from bank', 'good');
+  render();
+}
+
+/* ================= STANDALONE QUESTION BANK (browse / delete) ================= */
+let questionBankCache = [];
+async function openQuestionBank(){
+  const keys = await sList('qbank:');
+  const all = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  questionBankCache = all.filter(q=>q.teacherUsername===state.teacher.username)
+    .sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  go('questionBank');
+}
+function questionBankView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Question bank</h2>
+    <p class="subtext">Questions you've saved while building exams. Tick "save to bank" when adding a question to grow this list.</p>
+    ${questionBankCache.length===0 ? '<p class="hint">Nothing saved yet.</p>' : questionBankCache.map((q,i)=>`
+      <div class="qbuilder-item">
+        <div class="qtop"><span>Grade ${q.grade} · ${q.topic} <span class="type-tag type-${q.type}">${typeLabel(q.type)}</span>${q.image?' 🖼':''}</span>
+          <button class="remove-x" onclick="deleteBankQuestion('${q.id}')">delete</button></div>
+        <div>${q.text}</div>
+      </div>`).join('')}
+  </div>
+  <button class="btn-ghost" onclick="go('teacherDashboard')">Back to dashboard</button>`;
+}
+async function deleteBankQuestion(id){
+  if(!db) return;
+  try{ await db.collection('appdata').doc('qbank:'+id).delete(); toast('Deleted', 'good'); openQuestionBank(); }
+  catch(e){ toast('Could not delete.', 'bad'); }
+}
+
+/* ================= BULK ROSTER UPLOAD ================= */
+function bulkRosterView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Bulk add learners</h2>
+    <p class="subtext">Paste one full name per line. This creates real accounts with an auto-generated username and password — you'll get a list to hand out afterward.</p>
+    <label>Grade</label>
+    <select id="br-grade">${gradeOptions('1')}</select>
+    <label>Names (one per line)</label>
+    <textarea id="br-names" placeholder="Jane Wanjiru Otieno&#10;John Kamau Mwangi&#10;..." style="min-height:140px;"></textarea>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="createBulkAccounts()">Create accounts</button>
+    <button class="btn-ghost" onclick="go('teacherDashboard')">Cancel</button>
+  </div>`;
+}
+function randomUsernameFrom(fullNameVal, used){
+  const first = (fullNameVal.trim().split(/\s+/)[0] || 'user').toLowerCase().replace(/[^a-z]/g,'') || 'user';
+  let uname, tries=0;
+  do{
+    const digits = String(Math.floor(Math.random()*90)+10);
+    uname = first + digits;
+    tries++;
+  } while(used.has(keyify(uname)) && tries<20);
+  return uname;
+}
+function randomPassword(){
+  const letters = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  let p = '';
+  for(let i=0;i<2;i++) p += letters[Math.floor(Math.random()*letters.length)];
+  for(let i=0;i<2;i++) p += digits[Math.floor(Math.random()*digits.length)];
+  return p;
+}
+let bulkResultsCache = [];
+async function createBulkAccounts(){
+  const grade = val('br-grade');
+  const namesRaw = document.getElementById('br-names').value;
+  const names = namesRaw.split('\n').map(n=>n.trim()).filter(Boolean);
+  if(names.length===0){ setErr('Paste at least one name.'); return; }
+  const usedUsernames = new Set();
+  const created = [];
+  for(const fullNameVal of names){
+    const nk = keyify(fullNameVal);
+    const existingByName = await sGet('learnername:'+nk);
+    if(existingByName){ created.push({ name: fullNameVal, username: '(already exists)', password: '—', skipped:true }); continue; }
+    const username = randomUsernameFrom(fullNameVal, usedUsernames);
+    usedUsernames.add(keyify(username));
+    const password = randomPassword();
+    const uk = keyify(username);
+    const learner = { fullName: fullNameVal, username, school: state.teacher.school||'', grade, email:'', password, theme:'cream', createdByTeacher: state.teacher.username };
+    await sSet('learner:'+uk, learner);
+    await sSet('learnername:'+nk, { usernameKey: uk });
+    created.push({ name: fullNameVal, username, password, skipped:false });
+  }
+  bulkResultsCache = created;
+  toast(created.filter(c=>!c.skipped).length+' accounts created', 'good');
+  go('bulkRosterResult');
+}
+function bulkRosterResultView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Accounts created</h2>
+    <p class="subtext">Hand these out to your learners — they can log in with the username and password shown, then change the password themselves in Settings.</p>
+    <table class="resulttable">
+      <tr><th>Name</th><th>Username</th><th>Password</th></tr>
+      ${bulkResultsCache.map(c=>`<tr><td>${c.name}</td><td class="mono">${c.username}</td><td class="mono">${c.password}</td></tr>`).join('')}
+    </table>
+    <button class="btn-ghost btn-sm" onclick="copyBulkResults()">Copy as text</button>
+  </div>
+  <button class="btn-ghost" onclick="go('teacherDashboard')">Back to dashboard</button>`;
+}
+function copyBulkResults(){
+  const text = bulkResultsCache.map(c=>`${c.name} — username: ${c.username}, password: ${c.password}`).join('\n');
+  try{
+    navigator.clipboard.writeText(text);
+    toast('Copied to clipboard', 'good');
+  }catch(e){ toast('Could not copy — select and copy manually.', 'bad'); }
+}
+
+async function saveExam(){
+  syncDraft();
+  const d = state.examDraft;
+  if(!d.title){ setErr('Give the exam a title.'); return; }
+  if(d.untimed){ if(!d.dueAt){ setErr('Set a due date.'); return; } }
+  else { if(!d.openAt){ setErr('Set when the exam opens.'); return; } }
+  if(d.questions.length===0 && asFileArray(d.paperFiles||d.paperFile).length===0){ setErr('Add at least one question, or attach a question paper.'); return; }
+  const existingKeys = new Set(await sList('exam:'));
+  const code = genCode(existingKeys);
+  const exam = { ...d, code, teacherUsername: state.teacher.username, school: state.teacher.school||'', createdAt: new Date().toISOString() };
+  await sSet('exam:'+code, exam);
+  await createNotification({ type:'exam', grade: exam.grade, school: exam.school,
+    message: exam.untimed
+      ? `New homework "${exam.title}" was added by ${state.teacher.fullname} — due ${new Date(exam.dueAt).toLocaleString()}.`
+      : `New exam "${exam.title}" was added by ${state.teacher.fullname} — opens ${new Date(exam.openAt).toLocaleString()}.` });
+  toast((exam.untimed?'Homework':'Exam')+' created'+(exam.untimed?'':' — code '+code), 'good');
+  go('examCreated', { activeExam: exam });
+}
+
+function examCreatedView(){
+  const exam = state.activeExam;
+  return `
+  ${brandHTML()}
+  <div class="card score-hero">
+    ${exam.untimed ? `
+      <div class="eyebrow">Homework created</div>
+      <div class="big" style="font-size:1.6rem;">${exam.title}</div>
+      <div class="msg">Appears automatically for Grade ${exam.grade} · due ${new Date(exam.dueAt).toLocaleString()}</div>
+    ` : `
+      <div class="eyebrow">Share this code with learners</div>
+      <div class="big mono">${exam.code}</div>
+      <div class="msg">Opens ${new Date(exam.openAt).toLocaleString()} · runs ${exam.durationMinutes} min</div>
+    `}
+  </div>
+  <button class="btn-primary" onclick="go('teacherDashboard')">Back to dashboard</button>`;
+}
+
+/* ================= NOTE BUILDER (teacher) ================= */
+function noteBuilderView(){
+  const d = state.noteDraft;
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Upload a class note</h2>
+    <label>Title</label><input id="nb-title" value="${d.title}">
+    <div class="row2">
+      <div><label>Grade</label><select id="nb-grade">${gradeOptions(d.grade)}</select></div>
+      <div><label>Topic</label><select id="nb-topic">${TOPICS.map(t=>`<option ${d.topic===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <label>Note text (optional — use $...$ for math)</label>
+    <textarea id="nb-text" placeholder="Type notes directly, e.g. 1/2 + 3/4 rules..." oninput="updateLivePreview(this.value,'nb-text-preview')">${d.textContent}</textarea>
+    <div id="nb-text-preview" class="hint" style="min-height:1.2em;"></div>
+    <label>Or attach file(s) — PDF/image, optional, one or more</label>
+    <input type="file" multiple onchange="attachNoteFile(this)">
+    <div id="note-file-name" class="hint">${asFileArray(d.files||d.file).length ? 'Attached: '+asFileArray(d.files||d.file).map(f=>f.name).join(', ') : 'No file attached.'}</div>
+    <div class="err">${state.err}</div>
+    <button class="btn-primary" onclick="saveNote()">Save note</button>
+    <button class="btn-ghost" onclick="go('teacherDashboard')">Cancel</button>
+  </div>`;
+}
+async function attachNoteFile(inputEl){
+  const newFiles = await pickFiles(inputEl);
+  if(newFiles.length===0) return;
+  if(!Array.isArray(state.noteDraft.files)) state.noteDraft.files = asFileArray(state.noteDraft.file);
+  state.noteDraft.files.push(...newFiles);
+  state.noteDraft.file = null;
+  document.getElementById('note-file-name').textContent = 'Attached: '+state.noteDraft.files.map(f=>f.name).join(', ');
+  toast(newFiles.length>1 ? newFiles.length+' files attached' : 'File attached', 'good');
+}
+async function saveNote(){
+  const d = state.noteDraft;
+  d.title = val('nb-title'); d.grade = val('nb-grade'); d.topic = val('nb-topic'); d.textContent = autoMathify(val('nb-text'));
+  if(!d.title){ setErr('Give the note a title.'); return; }
+  const files = asFileArray(d.files||d.file);
+  if(!d.textContent && files.length===0){ setErr('Add some text or attach a file.'); return; }
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  const note = { id, title:d.title, grade:d.grade, topic:d.topic, textContent:d.textContent||null, files,
+    teacherUsername: state.teacher.username, teacherName: state.teacher.fullname, school: state.teacher.school||'', createdAt: new Date().toISOString() };
+  await sSet('note:'+id, note);
+  await createNotification({ type:'note', grade: note.grade, school: note.school,
+    message: `${state.teacher.fullname} added new notes: "${note.title}".` });
+  toast('Note uploaded', 'good');
+  go('teacherDashboard');
+}
+
+/* ================= CLASS ANALYTICS ================= */
+let analyticsExam = null, analyticsData = [];
+async function openExamAnalytics(code){
+  analyticsExam = await sGet('exam:'+code);
+  if(!analyticsExam){ toast('Exam not found.', 'bad'); return; }
+  const keys = await sList('examresult:'+code+':');
+  const results = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  analyticsData = analyticsExam.questions.map((q,i)=>{
+    if(q.type!=='mcq') return { q, i, type:'manual' };
+    let correct=0, attempted=0;
+    results.forEach(r=>{
+      if(r.answers[i]!==null && r.answers[i]!==undefined){ attempted++; if(r.answers[i]===q.correctIndex) correct++; }
+    });
+    const pct = attempted>0 ? Math.round((correct/attempted)*100) : null;
+    return { q, i, type:'mcq', attempted, correct, pct };
+  });
+  go('examAnalytics');
+}
+function examAnalyticsView(){
+  const exam = analyticsExam;
+  const mcqRows = analyticsData.filter(d=>d.type==='mcq').sort((a,b)=> (a.pct===null?101:a.pct) - (b.pct===null?101:b.pct));
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>Analytics — ${exam.title}</h2>
+    <p class="subtext">Multiple-choice questions, weakest first — shows where the class is struggling.</p>
+    ${mcqRows.length===0 ? '<p class="subtext">No multiple-choice questions in this exam.</p>' : mcqRows.map(d=>`
+      <div class="qbuilder-item">
+        <div class="qtop"><span>Q${d.i+1}</span><span class="hint">${d.attempted} answered</span></div>
+        <div style="margin-bottom:8px;">${d.q.text}</div>
+        ${d.pct===null ? '<div class="hint">No attempts yet</div>' : `
+        <div class="progress"><div class="progress-fill" style="width:${d.pct}%; background:${d.pct<50?'var(--sting)':d.pct<75?'var(--gold)':'var(--sage)'};"></div></div>
+        <div class="hint" style="margin-top:4px;">${d.correct}/${d.attempted} got it right (${d.pct}%)</div>`}
+      </div>`).join('')}
+  </div>
+  <button class="btn-ghost" onclick="go('teacherDashboard')">Back to dashboard</button>`;
+}
+
+/* ================= MARK SUBMISSIONS ================= */
+let markingExam = null, markingResults = [];
+async function openMarking(code){
+  markingExam = await sGet('exam:'+code);
+  const keys = await sList('examresult:'+code+':');
+  markingResults = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  go('markSubmissions');
+}
+function markSubmissionsView(){
+  const exam = markingExam;
+  if(!exam) return `${brandHTML()}<p class="subtext">Exam not found.</p><button class="btn-ghost" onclick="go('teacherDashboard')">Back</button>`;
+  const manualQs = exam.questions.map((q,i)=>({q,i})).filter(x=>x.q.type!=='mcq' && x.q.type!=='short');
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>${exam.title}</h2>
+    <p class="subtext">Code ${exam.code} · ${markingResults.length} submission(s)</p>
+    ${markingResults.length===0 ? '<p class="subtext">No submissions yet.</p>' : markingResults.map((r,ri)=>`
+      <div class="learner-row">
+        <div style="font-weight:600;">${r.learner}</div>
+        <div class="hint">Auto-marked: ${r.autoScore}/${r.autoTotal} ${r.manualTotal>0?'· Hand-marked out of '+r.manualTotal:''}</div>
+        ${hasPaper(exam) && asFileArray(r.paperAnswerFiles||r.paperAnswerFile).length ? `<div style="margin-top:8px;">${filesListHTML(r.paperAnswerFiles||r.paperAnswerFile, r.learner+"'s answer")}
+          <div style="margin-top:6px;">Paper mark: <input class="marks-input" type="number" min="0" id="paper-mark-${ri}" value="${r.marks && r.marks.paper!=null ? r.marks.paper : ''}"></div></div>` : ''}
+        ${manualQs.map(({q,i})=>`
+          <div class="qmark">
+            <div class="prompt">${questionHeading(q,i)}: ${q.text} <span class="hint">(out of ${q.points||1})</span></div>
+            ${q.image ? `<img src="${q.image.dataUrl}" style="max-width:100%; border-radius:9px; margin-bottom:8px;">` : ''}
+            ${q.type==='text' ? `<div class="hint" style="white-space:pre-wrap;">${(r.answers[i]||'(no answer)')}</div>` : filesListHTML(r.answers[i])}
+            <div style="margin-top:8px;">Mark: <input class="marks-input" type="number" min="0" max="${q.points||1}" id="mark-${ri}-${i}" value="${r.marks && r.marks[i]!=null ? r.marks[i] : ''}"></div>
+          </div>`).join('')}
+        <button class="btn-ghost btn-sm" onclick="saveMarks(${ri})">Save marks for ${r.learner.split(' ')[0]}</button>
+      </div>
+    `).join('')}
+  </div>
+  <button class="btn-ghost" onclick="downloadExamPdf('${exam.code}')">Download PDF of all submissions</button>
+  <button class="btn-ghost" onclick="go('teacherDashboard')">Back to dashboard</button>`;
+}
+async function saveMarks(ri){
+  const exam = markingExam;
+  const r = markingResults[ri];
+  const marks = {};
+  exam.questions.forEach((q,i)=>{
+    if(q.type==='mcq' || q.type==='short') return;
+    if(el && el.value!=='') marks[i] = Number(el.value);
+  });
+  if(hasPaper(exam)){
+    const pel = document.getElementById('paper-mark-'+ri);
+    if(pel && pel.value!=='') marks.paper = Number(pel.value);
+  }
+  r.marks = marks;
+  await sSet('examresult:'+exam.code+':'+keyify(r.learner), r);
+  await createNotification({ type:'marks', learnerKey: keyify(r.learner),
+    message: `Your results for "${exam.title}" have been released.` });
+  toast('Marks saved for '+r.learner, 'good');
+}
+
+/* ================= PDF EXPORT ================= */
+async function downloadExamPdf(code){
+  toast('Preparing PDF…', 'info');
+  const exam = await sGet('exam:'+code);
+  const keys = await sList('examresult:'+code+':');
+  const results = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  if(!window.jspdf){ toast('PDF library did not load.', 'bad'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
+  doc.setFontSize(15); doc.text(exam.title+' — submissions', 10, y); y+=8;
+  doc.setFontSize(10); doc.text('Code '+exam.code+' · Grade '+exam.grade+' · '+exam.topic, 10, y); y+=10;
+  if(results.length===0){ doc.text('No submissions yet.', 10, y); }
+  results.forEach(r=>{
+    if(y>260){ doc.addPage(); y=15; }
+    doc.setFontSize(12); doc.text(r.learner+'  —  auto: '+r.autoScore+'/'+r.autoTotal, 10, y); y+=7;
+    doc.setFontSize(10);
+    exam.questions.forEach((q,i)=>{
+      if(q.type==='mcq' || q.type==='short') return;
+      if(y>265){ doc.addPage(); y=15; }
+      const lines = doc.splitTextToSize(questionHeading(q,i)+': '+stripMath(q.text), 185);
+      doc.text(lines, 10, y); y += lines.length*5+2;
+      if(q.type==='text'){
+        const alines = doc.splitTextToSize('Answer: '+(r.answers[i]||'(no answer)'), 185);
+        doc.text(alines, 10, y); y += alines.length*5+4;
+      } else {
+        const answers = asFileArray(r.answers[i]);
+        if(answers.length===0){ doc.text('Answer: no file attached', 10, y); y+=6; }
+        answers.forEach(ans=>{
+          if(y>265){ doc.addPage(); y=15; }
+          doc.text('Answer: uploaded file "'+ans.name+'"', 10, y); y+=6;
+          if(ans.type && ans.type.startsWith('image/')){
+            try{ doc.addImage(ans.dataUrl, undefined, 10, y, 60, 45); y+=50; }catch(e){}
+          } else { y+=4; }
+        });
+      }
+    });
+    if(hasPaper(exam)){
+      if(y>265){ doc.addPage(); y=15; }
+      const ansFiles = asFileArray(r.paperAnswerFiles||r.paperAnswerFile);
+      doc.text('Paper answer file(s): '+(ansFiles.length ? ansFiles.map(f=>f.name).join(', ') : 'not submitted'), 10, y); y+=8;
+    }
+    y+=6;
+  });
+  doc.save(exam.code+'-submissions.pdf');
+  toast('PDF downloaded', 'good');
+}
+function stripMath(s){ return s.replace(/\$/g,''); }
+
+function csvEscape(v){
+  const s = String(v==null?'':v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+async function downloadExamCsv(code){
+  toast('Preparing CSV…', 'info');
+  const exam = await sGet('exam:'+code);
+  if(!exam){ toast('Exam not found.', 'bad'); return; }
+  const keys = await sList('examresult:'+code+':');
+  const raw = (await Promise.all(keys.map(k=>sGet(k)))).filter(Boolean);
+  const enriched = await Promise.all(raw.map(enrichResult));
+  const header = ['Learner','Auto score','Auto total','Manual awarded','Manual total','Paper mark','Total %','Rating','Status','Submitted at'];
+  const rows = enriched.map(r=>{
+    const manualAwarded = (r.totalAwarded||0) - (r.autoScore||0) - (r.marks&&r.marks.paper!=null?Number(r.marks.paper):0);
+    return [
+      r.learner, r.autoScore, r.autoTotal, manualAwarded, r.manualTotal,
+      r.marks&&r.marks.paper!=null?r.marks.paper:'', r.pct!==null?r.pct:'', r.rating||'',
+      r.fullyMarked?'Fully marked':'Pending', new Date(r.submittedAt).toLocaleString()
+    ];
+  });
+  const csv = [header, ...rows].map(row=>row.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = exam.code+'-results.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded', 'good');
+}
+
+/* ---------- utils ---------- */
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function setErr(msg){ state.err = msg; render(); }
+function togglePw(id, btn){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(el.type==='password'){ el.type='text'; btn.textContent='Hide'; }
+  else { el.type='password'; btn.textContent='Show'; }
+}
+
+/* ---------- root render ---------- */
+function setupNeededView(){
+  return `
+  ${brandHTML()}
+  <div class="card">
+    <h2>One more step</h2>
+    <p class="subtext">This app needs a free Firebase database connected before it can save signups, exams, and results.</p>
+    <ol class="hint" style="padding-left:18px; line-height:1.9;">
+      <li>Go to <span class="mono">console.firebase.google.com</span> → Add project (free)</li>
+      <li>Build → Firestore Database → Create database → start in <b>test mode</b></li>
+      <li>Gear icon → Project settings → "Your apps" → click <span class="mono">&lt;/&gt;</span> to register a web app</li>
+      <li>Copy the config values shown, paste them into <span class="mono">firebaseConfig</span> near the top of this file's code</li>
+      <li>Re-upload the file to GitHub as <span class="mono">index.html</span> — the live site updates automatically</li>
+    </ol>
+  </div>`;
+}
+function render(){
+  const app = document.getElementById('app');
+  if(!firebaseReady){ app.innerHTML = setupNeededView(); return; }
+  document.body.classList.toggle('has-sidebar', !!state.learner);
+  let html = '';
+  switch(state.view){
+    case 'home': html = homeView(); break;
+    case 'adminLogin': html = adminLoginView(); break;
+    case 'adminDashboard': html = adminDashboardView(); break;
+    case 'learnerAuth': html = learnerAuthView(); break;
+    case 'learnerForgot': html = learnerForgotView(); break;
+    case 'learnerDashboard': html = learnerDashboardView(); break;
+    case 'examTaking': html = examTakingView(); break;
+    case 'examResult': html = examResultView(); break;
+    case 'practiceQuiz': html = practiceQuizView(); break;
+    case 'practiceResult': html = practiceResultView(); break;
+    case 'examReview': html = examReviewView(); break;
+    case 'examAnswerReview': html = examAnswerReviewView(); break;
+    case 'teacherAuth': html = teacherAuthView(); break;
+    case 'teacherDashboard': html = teacherDashboardView(); break;
+    case 'teacherLeaderboard': html = teacherLeaderboardView(); break;
+    case 'examBuilder': html = examBuilderView(); break;
+    case 'examCreated': html = examCreatedView(); break;
+    case 'examEdit': html = examEditView(); break;
+    case 'noteBuilder': html = noteBuilderView(); break;
+    case 'questionBank': html = questionBankView(); break;
+    case 'bulkRoster': html = bulkRosterView(); break;
+    case 'bulkRosterResult': html = bulkRosterResultView(); break;
+    case 'classNotes': html = classNotesView(); break;
+    case 'history': html = historyView(); break;
+    case 'classroom': html = classroomView(); break;
+    case 'messages': html = messagesView(); break;
+    case 'newMessage': html = newMessageView(); break;
+    case 'newGroup': html = newGroupView(); break;
+    case 'chat': html = chatView(); break;
+    case 'accountInfo': html = accountInfoView(); break;
+    case 'notifications': html = notificationsView(); break;
+    case 'learnerSettings': html = learnerSettingsView(); break;
+    case 'markSubmissions': html = markSubmissionsView(); break;
+    case 'examAnalytics': html = examAnalyticsView(); break;
+    case 'learnerResults': html = learnerResultsView(); break;
+    case 'leaderboard': html = leaderboardView(); break;
+    default: html = homeView();
+  }
+  app.innerHTML = html;
+  if(state.view==='teacherDashboard'){ renderExamList(); renderNoteList(); }
+  if(state.view==='learnerDashboard'){ renderHomeworkList(); refreshUnreadCounts(); }
+  if(state.view==='examBuilder') toggleQType();
+  if(window.renderMathInElement){
+    try{ renderMathInElement(app, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); }catch(e){}
+  }
+}
+
+render();
+
+/* ---------- splash screen ---------- */
+const MATH_QUOTES = [
+  "Every scorpion started stuck before it got sharp.",
+  "Mistakes are just practice in disguise.",
+  "Numbers reward patience.",
+  "A wrong answer is one step closer to the right one.",
+  "Sharpen your mind, one problem at a time.",
+  "Practice today, precision tomorrow.",
+  "Math rewards the persistent, not just the clever.",
+  "Small steps, solved problems.",
+  "Stay sharp — the next question is waiting.",
+  "The answer is closer than it looks. Keep working."
+];
+let splashDismissed = false;
+function dismissSplash(){
+  if(splashDismissed) return;
+  splashDismissed = true;
+  const el = document.getElementById('splash-screen');
+  if(!el) return;
+  el.classList.add('fade');
+  setTimeout(()=> el.remove(), 450);
+}
+(function initSplash(){
+  const q = document.getElementById('splash-quote');
+  if(q) q.textContent = MATH_QUOTES[Math.floor(Math.random()*MATH_QUOTES.length)];
+  setTimeout(dismissSplash, 2200);
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=>console.error('SW registration failed', err));
+  });
+}
+
+/* ---------- install banner ---------- */
+let deferredInstallPrompt = null;
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function wasDismissed(){
+  try{ return localStorage.getItem('ms-install-dismissed') === '1'; }catch(e){ return false; }
+}
+function dismissInstallBanner(){
+  document.getElementById('install-banner').classList.add('hidden');
+  try{ localStorage.setItem('ms-install-dismissed', '1'); }catch(e){}
+}
+function showInstallBanner(){
+  if(isStandalone() || wasDismissed()) return;
+  const banner = document.getElementById('install-banner');
+  const btn = document.getElementById('install-banner-btn');
+  const msg = document.getElementById('install-banner-msg');
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(deferredInstallPrompt){
+    btn.style.display = '';
+    msg.textContent = 'Add it to your home screen for quick, full-screen access.';
+    btn.onclick = async ()=>{
+      banner.classList.add('hidden');
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+    };
+  } else if(isIOS){
+    btn.style.display = 'none';
+    msg.textContent = 'Tap the Share icon, then "Add to Home Screen".';
+  } else {
+    return; // not installable and not iOS — nothing useful to show
+  }
+  banner.classList.remove('hidden');
+}
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallBanner();
+});
+window.addEventListener('appinstalled', ()=>{
+  document.getElementById('install-banner').classList.add('hidden');
+});
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)){
+  setTimeout(showInstallBanner, 1500);
+}
+
+</script>
+</body>
+</html>
