@@ -1,4 +1,4 @@
-const CACHE = 'math-scorpion-v2';
+const CACHE = 'pace-setter-v1';
 const CORE_PATHS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -1,6 +1,6 @@
 {
-  "name": "Math Scorpion",
-  "short_name": "Math Scorpion",
+  "name": "Pace Setter",
+  "short_name": "Pace Setter",
   "description": "From Stuck to Sharp — math practice and exams for the CBC curriculum.",
   "start_url": "./index.html",
   "scope": "./",
