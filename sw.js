@@ -1,4 +1,4 @@
-const CACHE = 'pace-setter-v1';
+const CACHE = 'pace-setter-v2';
 const CORE_PATHS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (e) => {
